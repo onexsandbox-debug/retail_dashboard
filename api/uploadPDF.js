@@ -18,38 +18,54 @@ const supabase = createClient(
 export default async function handler(req, res) {
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false });
+    return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
 
   try {
 
     const form = formidable({
       multiples: false,
-      maxFileSize: 10 * 1024 * 1024
+      maxFileSize: 10 * 1024 * 1024 // 10MB
     });
 
     form.parse(req, async (err, fields, files) => {
 
       if (err) {
-        return res.status(400).json({ success: false, message: "File error" });
+        return res.status(400).json({
+          success: false,
+          message: "File parsing error"
+        });
       }
 
-      const file = files.file;
+      // ✅ Handle array/single file issue
+      const uploadedFile = Array.isArray(files.file)
+        ? files.file[0]
+        : files.file;
 
-      if (!file) {
-        return res.status(400).json({ success: false, message: "No file" });
+      if (!uploadedFile) {
+        return res.status(400).json({
+          success: false,
+          message: "No file uploaded"
+        });
       }
 
-      if (file.mimetype !== 'application/pdf') {
-        return res.status(400).json({ success: false, message: "Only PDF allowed" });
+      // ✅ Robust PDF validation (FIXED)
+      const isPDF =
+        uploadedFile.mimetype === 'application/pdf' ||
+        uploadedFile.originalFilename?.toLowerCase().endsWith('.pdf');
+
+      if (!isPDF) {
+        return res.status(400).json({
+          success: false,
+          message: "Only PDF allowed"
+        });
       }
 
-      // ✅ Prepare form-data for your API
+      // ✅ Prepare external API request
       const formData = new FormData();
       formData.append("phone_number", process.env.ONEX_PHONE);
-      formData.append("file", fs.createReadStream(file.filepath));
+      formData.append("file", fs.createReadStream(uploadedFile.filepath));
 
-      // ✅ Call your API
       const response = await fetch('https://api.onexaura.com/wa/mediaupload', {
         method: 'POST',
         headers: {
@@ -61,8 +77,8 @@ export default async function handler(req, res) {
 
       const result = await response.json();
 
-      // ⚠️ Adjust based on actual API response
-      const fileUrl = result?.url || result?.data?.url;
+      // ⚠️ Adjust if API response structure differs
+      const fileUrl = result?.url || result?.data?.url || result?.data?.media_url;
 
       if (!fileUrl) {
         return res.status(500).json({
