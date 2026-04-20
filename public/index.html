@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Retail Dashboard</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Manrope', sans-serif;
+      background: #f4f6f9;
+      display: flex;
+      font-size: 13px;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 240px;
+      background: white;
+      height: 100vh;
+      border-right: 1px solid #eee;
+    }
+
+    .logo {
+      padding: 15px 20px;
+    }
+
+    .menu {
+      padding: 10px;
+    }
+
+    .menu div {
+      padding: 12px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .menu div:hover {
+      background: #f5f5f5;
+    }
+
+    .active {
+      background: #ffe6e6;
+      color: #e60023;
+      font-weight: 600;
+    }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .logout-btn {
+      background: #c62828;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    .filters input {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .btn {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-refresh {
+      background: #1f4e8c;
+      color: white;
+    }
+
+    .btn-upload {
+      background: #D56269;
+      color: white;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user) window.location.href = "/login.html";
+</script>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+
+  <div class="logo">
+    <b style="padding-left:10px;">Retail Dashboard</b>
+  </div>
+
+  <div class="menu">
+    <div class="active" onclick="switchTab('upload', this)">Upload</div>
+    <div onclick="switchTab('store', this)">Nearest Store</div>
+    <div onclick="switchTab('offer', this)">Offer</div>
+    <div onclick="switchTab('loyalty', this)">Loyalty Points</div>
+  </div>
+
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h3 id="title">Upload Center</h3>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filters">
+    <input type="text" placeholder="Search (future use)">
+    <input type="date" id="dateFilter">
+
+    <button class="btn btn-refresh" onclick="refreshData()">Refresh</button>
+  </div>
+
+  <!-- UPLOAD -->
+  <div id="upload" class="card">
+    <h3>Upload PDF</h3>
+
+    <input type="file" id="pdfFile" accept="application/pdf">
+    <br><br>
+
+    <button class="btn btn-upload" onclick="uploadPDF()">Upload</button>
+
+    <p id="result"></p>
+  </div>
+
+  <!-- OTHER SECTIONS -->
+  <div id="store" class="card hidden">
+    <h3>Nearest Store</h3>
+    <p>Coming soon...</p>
+  </div>
+
+  <div id="offer" class="card hidden">
+    <h3>Offers</h3>
+    <p>Coming soon...</p>
+  </div>
+
+  <div id="loyalty" class="card hidden">
+    <h3>Loyalty Points</h3>
+    <p>Coming soon...</p>
+  </div>
+
+</div>
+
+<script src="/js/upload.js"></script>
+
+<script>
+
+let currentTab = 'upload';
+
+// ✅ Sidebar switching
+function switchTab(tab, el) {
+  currentTab = tab;
+
+  document.querySelectorAll('.menu div').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
+
+  document.querySelectorAll('.main > div.card').forEach(d => d.classList.add('hidden'));
+  document.getElementById(tab).classList.remove('hidden');
+
+  document.getElementById("title").innerText =
+    tab === 'upload' ? "Upload Center" :
+    tab === 'store' ? "Nearest Store" :
+    tab === 'offer' ? "Offers" : "Loyalty Points";
+}
+
+// ✅ Refresh logic (like your file)
+function refreshData() {
+
+  if (currentTab === 'upload') {
+    document.getElementById("pdfFile").value = "";
+    document.getElementById("result").innerText = "";
+  }
+
+  // future expansion
+  console.log("Refreshed:", currentTab);
+}
+
+// ✅ Logout
+function logout() {
+  localStorage.removeItem("user");
+  window.location.href = "/login.html";
+}
+
+</script>
+
+</body>
+</html>
