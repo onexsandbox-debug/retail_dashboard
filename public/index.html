@@ -14,11 +14,20 @@
       font-size: 13px;
     }
 
+    /* SIDEBAR */
     .sidebar {
       width: 240px;
       background: white;
       height: 100vh;
       border-right: 1px solid #eee;
+    }
+
+    .logo {
+      padding: 15px 20px;
+    }
+
+    .logo img {
+      max-width: 140px;
     }
 
     .menu {
@@ -42,6 +51,7 @@
       font-weight: 600;
     }
 
+    /* MAIN */
     .main {
       flex: 1;
       padding: 20px;
@@ -63,47 +73,70 @@
       cursor: pointer;
     }
 
+    /* FILTER */
     .filters {
       display: flex;
       gap: 10px;
       margin-bottom: 15px;
-      flex-wrap: wrap;
       background: white;
       padding: 15px;
       border-radius: 10px;
     }
 
-    .filters input {
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    .btn {
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-    }
-
     .btn-refresh {
       background: #1f4e8c;
       color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
     }
 
-    .btn-upload {
-      background: #D56269;
-      color: white;
-    }
-
+    /* CARD */
     .card {
       background: white;
       padding: 20px;
       border-radius: 10px;
     }
 
-    .hidden {
-      display: none;
+    /* 🔥 MODERN UPLOAD BOX */
+    .upload-box {
+      border: 2px dashed #ccc;
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .upload-box:hover {
+      border-color: #D56269;
+      background: #fff7f7;
+    }
+
+    .upload-box.dragover {
+      border-color: #D56269;
+      background: #ffeaea;
+    }
+
+    .upload-icon {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .file-name {
+      margin-top: 10px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .btn-upload {
+      margin-top: 15px;
+      padding: 10px 14px;
+      background: #D56269;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
     }
 
     /* MODAL */
@@ -121,7 +154,6 @@
       background: white;
       padding: 20px;
       border-radius: 10px;
-      min-width: 300px;
       text-align: center;
     }
 
@@ -131,47 +163,65 @@
 <body>
 
 <script>
-const user = JSON.parse(localStorage.getItem("user"));
-if (!user) window.location.href = "/login.html";
+if (!localStorage.getItem("user")) {
+  window.location.href = "/login.html";
+}
 </script>
 
+<!-- SIDEBAR -->
 <div class="sidebar">
+  <div class="logo">
+    <img src="https://warcssm.1xtel.co/media/media/2b47ba00-2481-4131-a600-0d2ebd01f0b5/OneXtel_Logo_P.jpg">
+  </div>
+
   <div class="menu">
-    <div class="active" onclick="switchTab('upload', this)">Upload</div>
-    <div onclick="switchTab('store', this)">Nearest Store</div>
-    <div onclick="switchTab('offer', this)">Offer</div>
-    <div onclick="switchTab('loyalty', this)">Loyalty Points</div>
+    <div class="active">Upload</div>
+    <div>Nearest Store</div>
+    <div>Offer</div>
+    <div>Loyalty Points</div>
   </div>
 </div>
 
+<!-- MAIN -->
 <div class="main">
 
   <div class="header">
-    <h3 id="title">Upload Center</h3>
+    <h3>Upload Center</h3>
     <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 
   <div class="filters">
-    <input type="text" placeholder="Search (future use)">
+    <input type="text" placeholder="Search (future)">
     <input type="date">
-    <button class="btn btn-refresh" onclick="refreshData()">Refresh</button>
+    <button class="btn-refresh" onclick="refreshData()">Refresh</button>
   </div>
 
-  <div id="upload" class="card">
+  <div class="card">
+
     <h3>Upload PDF</h3>
-    <input type="file" id="pdfFile" accept="application/pdf">
-    <br><br>
-    <button class="btn btn-upload" onclick="uploadPDF()">Upload</button>
+
+    <!-- 🔥 MODERN DROP ZONE -->
+    <div class="upload-box" id="dropZone">
+      <div class="upload-icon">📄</div>
+      <div>Drag & Drop PDF here</div>
+      <small>or click to browse</small>
+      <input type="file" id="pdfFile" hidden>
+      <div id="fileName" class="file-name"></div>
+    </div>
+
+    <button class="btn-upload" onclick="uploadPDF()">Upload</button>
+
     <p id="result"></p>
+
   </div>
 
 </div>
 
-<!-- ERROR MODAL -->
+<!-- MODAL -->
 <div id="errorModal">
   <div class="modal-box">
     <p id="errorText"></p>
-    <button onclick="closeError()" class="btn btn-upload">OK</button>
+    <button onclick="closeError()" class="btn-upload">OK</button>
   </div>
 </div>
 
@@ -179,6 +229,13 @@ if (!user) window.location.href = "/login.html";
 
 <script>
 
+// LOGOUT
+function logout() {
+  localStorage.removeItem("user");
+  window.location.href = "/login.html";
+}
+
+// ERROR
 function showError(msg) {
   document.getElementById("errorText").innerText = msg;
   document.getElementById("errorModal").style.display = "flex";
@@ -188,20 +245,40 @@ function closeError() {
   document.getElementById("errorModal").style.display = "none";
 }
 
-function logout() {
-  localStorage.removeItem("user");
-  window.location.href = "/login.html";
-}
-
+// REFRESH
 function refreshData() {
+  document.getElementById("fileName").innerText = "";
   document.getElementById("pdfFile").value = "";
   document.getElementById("result").innerText = "";
 }
 
-function switchTab(tab, el) {
-  document.querySelectorAll('.menu div').forEach(d => d.classList.remove('active'));
-  el.classList.add('active');
-}
+// 🔥 DRAG & DROP LOGIC
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("pdfFile");
+
+dropZone.addEventListener("click", () => fileInput.click());
+
+fileInput.addEventListener("change", () => {
+  document.getElementById("fileName").innerText = fileInput.files[0].name;
+});
+
+dropZone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropZone.classList.add("dragover");
+});
+
+dropZone.addEventListener("dragleave", () => {
+  dropZone.classList.remove("dragover");
+});
+
+dropZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+
+  fileInput.files = e.dataTransfer.files;
+  document.getElementById("fileName").innerText =
+    e.dataTransfer.files[0].name;
+});
 
 </script>
 
