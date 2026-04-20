@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') {
     console.log("❌ Invalid method:", req.method);
-    return res.status(405).json({ success: false });
+    return res.status(405).json({ success: false, message: "Method not allowed" });
   }
 
   try {
@@ -35,33 +35,49 @@ export default async function handler(req, res) {
 
       if (err) {
         console.log("❌ Form parse error:", err);
-        return res.status(400).json({ success: false });
+        return res.status(400).json({
+          success: false,
+          message: "File parsing error"
+        });
       }
 
+      // ✅ Handle file properly (array/single)
       const uploadedFile = Array.isArray(files.file)
         ? files.file[0]
         : files.file;
 
       if (!uploadedFile) {
         console.log("❌ No file received");
-        return res.status(400).json({ success: false, message: "No file uploaded" });
+        return res.status(400).json({
+          success: false,
+          message: "No file uploaded"
+        });
       }
 
       console.log("📄 File received:", uploadedFile.originalFilename);
+      console.log("📄 MIME:", uploadedFile.mimetype);
 
+      // ✅ Robust PDF validation
       const isPDF =
         uploadedFile.mimetype === 'application/pdf' ||
         uploadedFile.originalFilename?.toLowerCase().endsWith('.pdf');
 
       if (!isPDF) {
-        console.log("❌ Not a PDF");
-        return res.status(400).json({ success: false, message: "Only PDF allowed" });
+        console.log("❌ Invalid file type");
+        return res.status(400).json({
+          success: false,
+          message: "Only PDF allowed"
+        });
       }
 
-      // ✅ Prepare external API request
+      // ✅ FIXED: Send correct MIME type to external API
       const formData = new FormData();
       formData.append("phone_number", process.env.ONEX_PHONE);
-      formData.append("file", fs.createReadStream(uploadedFile.filepath));
+
+      formData.append("file", fs.createReadStream(uploadedFile.filepath), {
+        filename: uploadedFile.originalFilename,
+        contentType: 'application/pdf'   // 🔥 CRITICAL FIX
+      });
 
       console.log("📡 Calling external API...");
 
@@ -78,7 +94,7 @@ export default async function handler(req, res) {
 
       console.log("📥 API RESPONSE:", JSON.stringify(result, null, 2));
 
-      // ✅ FIXED FIELD
+      // ✅ FIXED: correct field
       const fileUrl = result?.onextel_media_url;
 
       if (!fileUrl) {
@@ -92,10 +108,12 @@ export default async function handler(req, res) {
 
       console.log("✅ URL RECEIVED:", fileUrl);
 
-      // ✅ Insert into DB
+      // ✅ Save to DB
       const { error: dbError } = await supabase
         .from('pdf_uploads')
-        .insert([{ file_url: fileUrl }]);
+        .insert([
+          { file_url: fileUrl }
+        ]);
 
       if (dbError) {
         console.log("❌ DB ERROR:", dbError);
