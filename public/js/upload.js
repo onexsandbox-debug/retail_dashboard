@@ -4,17 +4,22 @@ async function uploadPDF() {
   const file = fileInput.files[0];
 
   if (!file) {
-    alert("Select a file");
+    showError("Please select a file");
     return;
   }
 
-  if (file.type !== "application/pdf") {
-    alert("Only PDF allowed");
+  // ✅ Fix: robust PDF validation
+  const isPDF =
+    file.type === "application/pdf" ||
+    file.name.toLowerCase().endsWith(".pdf");
+
+  if (!isPDF) {
+    showError("Only PDF files allowed");
     return;
   }
 
   if (file.size > 10 * 1024 * 1024) {
-    alert("Max size 10MB");
+    showError("Max file size is 10MB");
     return;
   }
 
@@ -22,6 +27,7 @@ async function uploadPDF() {
   formData.append("file", file);
 
   try {
+
     const res = await fetch('/api/uploadPDF', {
       method: 'POST',
       body: formData
@@ -29,14 +35,17 @@ async function uploadPDF() {
 
     const data = await res.json();
 
-    if (data.success) {
-      document.getElementById("result").innerHTML =
-        `<a href="${data.url}" target="_blank">${data.url}</a>`;
-    } else {
-      alert(data.message || "Upload failed");
+    if (!data.success) {
+      showError(data.message || "Upload failed");
+      return;
     }
 
+    // ✅ Success UI
+    document.getElementById("result").innerHTML =
+      `<b>Uploaded:</b><br>
+       <a href="${data.url}" target="_blank">${data.url}</a>`;
+
   } catch (err) {
-    alert("Server error");
+    showError("Server error. Please try again.");
   }
 }
