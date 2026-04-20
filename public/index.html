@@ -14,16 +14,11 @@
       font-size: 13px;
     }
 
-    /* SIDEBAR */
     .sidebar {
       width: 240px;
       background: white;
       height: 100vh;
       border-right: 1px solid #eee;
-    }
-
-    .logo {
-      padding: 15px 20px;
     }
 
     .menu {
@@ -47,7 +42,6 @@
       font-weight: 600;
     }
 
-    /* MAIN */
     .main {
       flex: 1;
       padding: 20px;
@@ -112,6 +106,25 @@
       display: none;
     }
 
+    /* MODAL */
+    #errorModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      min-width: 300px;
+      text-align: center;
+    }
+
   </style>
 </head>
 
@@ -122,107 +135,72 @@ const user = JSON.parse(localStorage.getItem("user"));
 if (!user) window.location.href = "/login.html";
 </script>
 
-<!-- SIDEBAR -->
 <div class="sidebar">
-
-  <div class="logo">
-    <b style="padding-left:10px;">Retail Dashboard</b>
-  </div>
-
   <div class="menu">
     <div class="active" onclick="switchTab('upload', this)">Upload</div>
     <div onclick="switchTab('store', this)">Nearest Store</div>
     <div onclick="switchTab('offer', this)">Offer</div>
     <div onclick="switchTab('loyalty', this)">Loyalty Points</div>
   </div>
-
 </div>
 
-<!-- MAIN -->
 <div class="main">
 
-  <!-- HEADER -->
   <div class="header">
     <h3 id="title">Upload Center</h3>
     <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 
-  <!-- FILTER BAR -->
   <div class="filters">
     <input type="text" placeholder="Search (future use)">
-    <input type="date" id="dateFilter">
-
+    <input type="date">
     <button class="btn btn-refresh" onclick="refreshData()">Refresh</button>
   </div>
 
-  <!-- UPLOAD -->
   <div id="upload" class="card">
     <h3>Upload PDF</h3>
-
     <input type="file" id="pdfFile" accept="application/pdf">
     <br><br>
-
     <button class="btn btn-upload" onclick="uploadPDF()">Upload</button>
-
     <p id="result"></p>
   </div>
 
-  <!-- OTHER SECTIONS -->
-  <div id="store" class="card hidden">
-    <h3>Nearest Store</h3>
-    <p>Coming soon...</p>
-  </div>
+</div>
 
-  <div id="offer" class="card hidden">
-    <h3>Offers</h3>
-    <p>Coming soon...</p>
+<!-- ERROR MODAL -->
+<div id="errorModal">
+  <div class="modal-box">
+    <p id="errorText"></p>
+    <button onclick="closeError()" class="btn btn-upload">OK</button>
   </div>
-
-  <div id="loyalty" class="card hidden">
-    <h3>Loyalty Points</h3>
-    <p>Coming soon...</p>
-  </div>
-
 </div>
 
 <script src="/js/upload.js"></script>
 
 <script>
 
-let currentTab = 'upload';
-
-// ✅ Sidebar switching
-function switchTab(tab, el) {
-  currentTab = tab;
-
-  document.querySelectorAll('.menu div').forEach(d => d.classList.remove('active'));
-  el.classList.add('active');
-
-  document.querySelectorAll('.main > div.card').forEach(d => d.classList.add('hidden'));
-  document.getElementById(tab).classList.remove('hidden');
-
-  document.getElementById("title").innerText =
-    tab === 'upload' ? "Upload Center" :
-    tab === 'store' ? "Nearest Store" :
-    tab === 'offer' ? "Offers" : "Loyalty Points";
+function showError(msg) {
+  document.getElementById("errorText").innerText = msg;
+  document.getElementById("errorModal").style.display = "flex";
 }
 
-// ✅ Refresh logic (like your file)
-function refreshData() {
-
-  if (currentTab === 'upload') {
-    document.getElementById("pdfFile").value = "";
-    document.getElementById("result").innerText = "";
-  }
-
-  // future expansion
-  console.log("Refreshed:", currentTab);
+function closeError() {
+  document.getElementById("errorModal").style.display = "none";
 }
 
-// ✅ Logout
 function logout() {
   localStorage.removeItem("user");
   window.location.href = "/login.html";
+}
+
+function refreshData() {
+  document.getElementById("pdfFile").value = "";
+  document.getElementById("result").innerText = "";
+}
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.menu div').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
 }
 
 </script>
