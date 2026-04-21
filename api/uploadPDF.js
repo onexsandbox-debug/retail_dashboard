@@ -20,15 +20,19 @@ export default async function handler(req, res) {
   console.log("🚀 API HIT: uploadPDF");
 
   if (req.method !== 'POST') {
-    console.log("❌ Invalid method:", req.method);
-    return res.status(405).json({ success: false, message: "Method not allowed" });
+    return res.status(405).json({
+      success: false,
+      message: "Use POST method"
+    });
   }
 
   try {
 
+    // ✅ Increased file size + stable parsing
     const form = formidable({
       multiples: false,
-      maxFileSize: 10 * 1024 * 1024
+      maxFileSize: 15 * 1024 * 1024, // 15MB
+      keepExtensions: true
     });
 
     form.parse(req, async (err, fields, files) => {
@@ -37,11 +41,10 @@ export default async function handler(req, res) {
         console.log("❌ Form parse error:", err);
         return res.status(400).json({
           success: false,
-          message: "File parsing error"
+          message: "File parsing failed"
         });
       }
 
-      // ✅ Handle file properly (array/single)
       const uploadedFile = Array.isArray(files.file)
         ? files.file[0]
         : files.file;
@@ -54,8 +57,8 @@ export default async function handler(req, res) {
         });
       }
 
-      console.log("📄 File received:", uploadedFile.originalFilename);
-      console.log("📄 MIME:", uploadedFile.mimetype);
+      console.log("📄 File:", uploadedFile.originalFilename);
+      console.log("📦 Size:", uploadedFile.size);
 
       // ✅ Robust PDF validation
       const isPDF =
@@ -63,23 +66,26 @@ export default async function handler(req, res) {
         uploadedFile.originalFilename?.toLowerCase().endsWith('.pdf');
 
       if (!isPDF) {
-        console.log("❌ Invalid file type");
         return res.status(400).json({
           success: false,
           message: "Only PDF allowed"
         });
       }
 
-      // ✅ FIXED: Send correct MIME type to external API
+      // ✅ Prepare external API request
       const formData = new FormData();
       formData.append("phone_number", process.env.ONEX_PHONE);
 
       formData.append("file", fs.createReadStream(uploadedFile.filepath), {
         filename: uploadedFile.originalFilename,
-        contentType: 'application/pdf'   // 🔥 CRITICAL FIX
+        contentType: 'application/pdf'
       });
 
       console.log("📡 Calling external API...");
+
+      // ✅ Timeout protection (CRITICAL FIX)
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000); // 30 sec
 
       const response = await fetch('https://api.onexaura.com/wa/mediaupload', {
         method: 'POST',
@@ -87,28 +93,30 @@ export default async function handler(req, res) {
           'accept': 'application/json',
           'apikey': process.env.ONEX_API_KEY
         },
-        body: formData
+        body: formData,
+        signal: controller.signal
       });
+
+      clearTimeout(timeout);
 
       const result = await response.json();
 
       console.log("📥 API RESPONSE:", JSON.stringify(result, null, 2));
 
-      // ✅ FIXED: correct field
       const fileUrl = result?.onextel_media_url;
 
       if (!fileUrl) {
-        console.log("❌ URL not found in response");
+        console.log("❌ No URL returned");
         return res.status(500).json({
           success: false,
-          message: "URL not returned from API",
+          message: "Upload API failed",
           raw: result
         });
       }
 
-      console.log("✅ URL RECEIVED:", fileUrl);
+      console.log("✅ URL:", fileUrl);
 
-      // ✅ Save to DB
+      // ✅ Insert into DB
       const { error: dbError } = await supabase
         .from('pdf_uploads')
         .insert([
@@ -133,10 +141,20 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
+
     console.log("🔥 SERVER ERROR:", err);
+
+    // ✅ Handle timeout specifically
+    if (err.name === 'AbortError') {
+      return res.status(500).json({
+        success: false,
+        message: "Upload timeout. Try smaller file or retry."
+      });
+    }
+
     return res.status(500).json({
       success: false,
-      message: "Server error"
+      message: err.message || "Server error"
     });
   }
 }
