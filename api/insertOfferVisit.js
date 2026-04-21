@@ -7,47 +7,53 @@ const supabase = createClient(
 
 export default async function handler(req, res) {
 
-  console.log("🚀 API HIT: insertOfferVisit");
+  console.log("🚀 API HIT: insertOffer");
+  console.log("👉 METHOD:", req.method);
+  console.log("👉 BODY:", req.body);
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false });
+    console.log("❌ Invalid method");
+    return res.status(405).json({ success: false, message: "Use POST" });
   }
 
   try {
-
     const { mobile_number, waba_number } = req.body;
 
+    console.log("📥 Received:", mobile_number, waba_number);
+
     if (!mobile_number || !waba_number) {
+      console.log("❌ Missing fields");
       return res.status(400).json({
         success: false,
         message: "Missing required fields"
       });
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('retail_offer_visit')
-      .insert([
-        {
-          mobile_number,
-          waba_number
-        }
-      ]);
+      .insert([{
+        mobile_number,
+        waba_number,
+        module_name: 'offer'
+      }]);
 
     if (error) {
       console.log("❌ DB ERROR:", error);
       return res.status(500).json({
         success: false,
-        message: "Insert failed"
+        error
       });
     }
 
+    console.log("✅ INSERT SUCCESS:", data);
+
     return res.status(200).json({
       success: true,
-      message: "Offer visit logged"
+      message: "Offer inserted"
     });
 
   } catch (err) {
-    console.log("🔥 ERROR:", err);
+    console.log("🔥 SERVER ERROR:", err);
     return res.status(500).json({ success: false });
   }
 }
