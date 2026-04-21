@@ -1,6 +1,22 @@
-// =============================
-// 📤 UPLOAD PDF FUNCTION
-// =============================
+// ===============================
+// ✅ GLOBAL VARIABLES
+// ===============================
+let currentPage = 1;
+let pageSize = 10;
+let fullData = [];
+
+
+// ===============================
+// ✅ ERROR POPUP
+// ===============================
+function showError(msg) {
+  alert(msg);
+}
+
+
+// ===============================
+// ✅ PDF UPLOAD WITH PROGRESS
+// ===============================
 async function uploadPDF() {
 
   const fileInput = document.getElementById("pdfFile");
@@ -26,12 +42,10 @@ async function uploadPDF() {
     return;
   }
 
-  console.log("📄 FILE:", file.name, file.size);
-
   const formData = new FormData();
   formData.append("file", file);
 
-  // UI START
+  // UI Progress Start
   document.getElementById("uploadProgressContainer").style.display = "block";
   document.getElementById("progressBar").style.width = "0%";
   document.getElementById("progressText").innerText = "0%";
@@ -44,9 +58,7 @@ async function uploadPDF() {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/uploadPDF", true);
 
-    // =============================
-    // 📊 PROGRESS BAR
-    // =============================
+    // PROGRESS
     xhr.upload.onprogress = function (event) {
       if (event.lengthComputable) {
         const percent = Math.round((event.loaded / event.total) * 100);
@@ -57,8 +69,6 @@ async function uploadPDF() {
 
     xhr.onload = function () {
 
-      console.log("📥 RESPONSE:", xhr.responseText);
-
       btn.disabled = false;
       btn.innerText = "Upload";
 
@@ -67,10 +77,8 @@ async function uploadPDF() {
         const data = JSON.parse(xhr.responseText);
 
         if (data.success && data.url) {
-
           document.getElementById("result").innerHTML =
             `<b>Uploaded:</b><br><a href="${data.url}" target="_blank">${data.url}</a>`;
-
         } else {
           showError(data.message || "Upload failed");
         }
@@ -79,13 +87,13 @@ async function uploadPDF() {
         showError("Upload failed");
       }
 
+      // Hide progress after 1.5 sec
       setTimeout(() => {
         document.getElementById("uploadProgressContainer").style.display = "none";
       }, 1500);
     };
 
     xhr.onerror = function () {
-      console.log("❌ NETWORK ERROR");
       btn.disabled = false;
       btn.innerText = "Upload";
       showError("Network error");
@@ -94,7 +102,6 @@ async function uploadPDF() {
     xhr.send(formData);
 
   } catch (err) {
-    console.log("❌ ERROR:", err);
     btn.disabled = false;
     btn.innerText = "Upload";
     showError("Server error");
@@ -102,44 +109,10 @@ async function uploadPDF() {
 }
 
 
-// =============================
-// 🕒 IST DATE FORMAT
-// =============================
-function formatIST(dateString) {
-
-  const date = new Date(dateString);
-
-  const d = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Kolkata',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  }).format(date);
-
-  const t = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Kolkata',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  }).format(date);
-
-  return `${d} ${t}`;
-}
-
-
-// =============================
-// 📡 GLOBAL STORE
-// =============================
-let globalData = [];
-
-
-// =============================
-// 📡 LOAD DATA FROM API
-// =============================
+// ===============================
+// ✅ LOAD DATA FROM API
+// ===============================
 async function loadData(type) {
-
-  console.log("📊 Loading:", type);
 
   let api = "";
 
@@ -148,134 +121,149 @@ async function loadData(type) {
   if (type === "loyalty") api = "/api/getLoyaltyVisit";
 
   try {
-
     const res = await fetch(api);
     const data = await res.json();
 
-    console.log("📥 API DATA:", data);
+    fullData = data.data || [];
+    currentPage = 1;
 
-    globalData = data.data || [];
+    document.getElementById("dynamicContent").style.display = "block";
 
-    renderDynamic(type, globalData);
+    renderTable();
 
   } catch (err) {
     console.log("❌ FETCH ERROR:", err);
-    document.getElementById("dynamicContent").innerHTML = "Error loading data";
   }
 }
 
 
-// =============================
-// 🎯 RENDER DATA
-// =============================
-function renderDynamic(type, data) {
+// ===============================
+// ✅ TABLE RENDER
+// ===============================
+function renderTable() {
 
-  const el = document.getElementById("dynamicContent");
+  const start = (currentPage - 1) * pageSize;
+  const end = start + pageSize;
 
-  if (!data || data.length === 0) {
-    el.innerHTML = "No data available";
-    return;
-  }
+  const pageData = fullData.slice(start, end);
 
-  let title = "";
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = "";
 
-  if (type === "offer") title = "📦 Offer Activity";
-  if (type === "store") title = "📍 Store Visits";
-  if (type === "loyalty") title = "🎁 Loyalty Activity";
+  pageData.forEach((item, index) => {
 
-  document.getElementById("sectionTitle").innerText = title;
+    const dateObj = new Date(item.created_at);
 
-  let html = "";
+    const date = dateObj.toLocaleDateString("en-GB", {
+      timeZone: "Asia/Kolkata"
+    });
 
-  data.forEach(item => {
-    html += `
-      <div style="padding:8px 0; border-bottom:1px solid #eee;">
-        📱 <b>${item.mobile_number}</b> |
-        📡 ${item.waba_number} |
-        🧩 ${item.module_name}<br>
-        ⏱ ${formatIST(item.created_at)} IST
-      </div>
+    const time = dateObj.toLocaleTimeString("en-GB", {
+      timeZone: "Asia/Kolkata"
+    });
+
+    tbody.innerHTML += `
+      <tr style="border-bottom:1px solid #eee;">
+        <td>${start + index + 1}</td>
+        <td>${item.mobile_number}</td>
+        <td>${item.waba_number}</td>
+        <td>${item.module_name}</td>
+        <td>${date}</td>
+        <td>${time}</td>
+      </tr>
     `;
   });
 
-  el.innerHTML = html;
+  updatePageInfo();
 }
 
 
-// =============================
-// 🔍 SEARCH FILTER (NEW)
-// =============================
+// ===============================
+// ✅ PAGINATION
+// ===============================
+function updatePageInfo() {
+  const totalPages = Math.ceil(fullData.length / pageSize);
+  document.getElementById("pageInfo").innerText =
+    `Page ${currentPage} of ${totalPages}`;
+}
+
+function nextPage() {
+  const totalPages = Math.ceil(fullData.length / pageSize);
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderTable();
+  }
+}
+
+function prevPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    renderTable();
+  }
+}
+
+function changePageSize() {
+  pageSize = parseInt(document.getElementById("pageSize").value);
+  currentPage = 1;
+  renderTable();
+}
+
+
+// ===============================
+// ✅ SEARCH FILTER
+// ===============================
 function filterData() {
 
-  const query = document.querySelector('.filters input[type="text"]').value.toLowerCase();
-
-  console.log("🔍 SEARCH:", query);
+  const query = document.querySelector('.filters input').value.toLowerCase();
 
   if (!query) {
-    renderDynamic(currentTab, globalData);
+    renderTable();
     return;
   }
 
-  const filtered = globalData.filter(item =>
-    item.mobile_number.toLowerCase().includes(query) ||
-    item.waba_number.toLowerCase().includes(query) ||
+  const filtered = fullData.filter(item =>
+    item.mobile_number.includes(query) ||
+    item.waba_number.includes(query) ||
     item.module_name.toLowerCase().includes(query)
   );
 
-  renderDynamic(currentTab, filtered);
+  currentPage = 1;
+  renderFiltered(filtered);
 }
 
 
-// =============================
-// 📂 TAB HANDLING
-// =============================
-let currentTab = "upload";
+// ===============================
+// ✅ RENDER FILTERED DATA
+// ===============================
+function renderFiltered(data) {
 
-function switchTab(tab) {
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = "";
 
-  currentTab = tab;
+  data.forEach((item, index) => {
 
-  document.querySelectorAll(".menu div").forEach(el => el.classList.remove("active"));
-  event.target.classList.add("active");
+    const dateObj = new Date(item.created_at);
 
-  document.getElementById("dynamicContent").innerHTML = "Loading...";
+    const date = dateObj.toLocaleDateString("en-GB", {
+      timeZone: "Asia/Kolkata"
+    });
 
-  if (tab === "upload") {
-    document.getElementById("sectionTitle").innerText = "Upload Center";
-    document.getElementById("dynamicContent").innerHTML = "Upload section above";
-    return;
-  }
+    const time = dateObj.toLocaleTimeString("en-GB", {
+      timeZone: "Asia/Kolkata"
+    });
 
-  loadData(tab);
+    tbody.innerHTML += `
+      <tr style="border-bottom:1px solid #eee;">
+        <td>${index + 1}</td>
+        <td>${item.mobile_number}</td>
+        <td>${item.waba_number}</td>
+        <td>${item.module_name}</td>
+        <td>${date}</td>
+        <td>${time}</td>
+      </tr>
+    `;
+  });
+
+  document.getElementById("pageInfo").innerText =
+    `Filtered ${data.length} results`;
 }
-
-
-// =============================
-// 🔁 REFRESH
-// =============================
-function refreshData() {
-
-  console.log("🔄 REFRESH");
-
-  if (currentTab === "upload") {
-    document.getElementById("fileName").innerText = "";
-    document.getElementById("pdfFile").value = "";
-    document.getElementById("result").innerText = "";
-  } else {
-    loadData(currentTab);
-  }
-}
-
-
-// =============================
-// 🔍 AUTO SEARCH BIND
-// =============================
-document.addEventListener("DOMContentLoaded", () => {
-
-  const searchBox = document.querySelector('.filters input[type="text"]');
-
-  if (searchBox) {
-    searchBox.addEventListener("input", filterData);
-  }
-
-});
