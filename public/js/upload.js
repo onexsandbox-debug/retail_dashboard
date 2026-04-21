@@ -1,5 +1,5 @@
 // ================================
-// 🚀 FILE UPLOAD FUNCTION
+// 🚀 FILE UPLOAD
 // ================================
 async function uploadPDF() {
 
@@ -41,7 +41,6 @@ async function uploadPDF() {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/uploadPDF", true);
 
-    // 📊 Progress
     xhr.upload.onprogress = function (event) {
       if (event.lengthComputable) {
         const percent = Math.round((event.loaded / event.total) * 100);
@@ -63,6 +62,7 @@ async function uploadPDF() {
         } else {
           alert(data.message || "Upload failed");
         }
+
       } else {
         alert("Upload failed");
       }
@@ -90,16 +90,14 @@ async function uploadPDF() {
 // ================================
 // 📅 DATE FORMAT (IST)
 // ================================
-function formatDate(timestamp) {
-  const date = new Date(timestamp);
-  return date.toLocaleDateString("en-GB", {
+function formatDate(ts) {
+  return new Date(ts).toLocaleDateString("en-GB", {
     timeZone: "Asia/Kolkata"
   });
 }
 
-function formatTime(timestamp) {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString("en-GB", {
+function formatTime(ts) {
+  return new Date(ts).toLocaleTimeString("en-GB", {
     timeZone: "Asia/Kolkata",
     hour12: false
   });
@@ -108,16 +106,16 @@ function formatTime(timestamp) {
 // ================================
 // 📊 GLOBAL STATE
 // ================================
+let currentAPI = "";
 let currentPage = 1;
 let currentLimit = 10;
-let currentAPI = "";
 
 // ================================
-// 🔄 LOAD DATA GENERIC FUNCTION
+// 📡 LOAD DATA
 // ================================
-async function loadData(apiName, page = 1, limit = 10) {
+async function loadData(api, page = 1, limit = 10) {
 
-  currentAPI = apiName;
+  currentAPI = api;
   currentPage = page;
   currentLimit = limit;
 
@@ -125,22 +123,22 @@ async function loadData(apiName, page = 1, limit = 10) {
   tableBody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
 
   try {
-    const res = await fetch(`/api/${apiName}?page=${page}&limit=${limit}`);
+    const res = await fetch(`/api/${api}?page=${page}&limit=${limit}`);
     const json = await res.json();
 
+    console.log("API RESPONSE:", json); // 🔥 debug
+
     if (!json.success || !json.data) {
-      tableBody.innerHTML = "<tr><td colspan='6'>No data found</td></tr>";
+      tableBody.innerHTML = "<tr><td colspan='6'>No data</td></tr>";
       return;
     }
 
-    const rows = json.data;
-
     let html = "";
 
-    rows.forEach((row, index) => {
+    json.data.forEach((row, i) => {
       html += `
         <tr>
-          <td>${(page - 1) * limit + index + 1}</td>
+          <td>${(page - 1) * limit + i + 1}</td>
           <td>${row.mobile_number || "-"}</td>
           <td>${row.waba_number || "-"}</td>
           <td>${formatDate(row.created_at)}</td>
@@ -153,7 +151,8 @@ async function loadData(apiName, page = 1, limit = 10) {
     tableBody.innerHTML = html;
 
   } catch (err) {
-    tableBody.innerHTML = "<tr><td colspan='6'>Error loading data</td></tr>";
+    console.error("❌ Frontend error:", err);
+    tableBody.innerHTML = "<tr><td colspan='6'>Error loading</td></tr>";
   }
 }
 
@@ -172,14 +171,14 @@ function prevPage() {
   }
 }
 
-function changeLimit(limit) {
-  currentLimit = parseInt(limit);
+function changeLimit(val) {
+  currentLimit = parseInt(val);
   currentPage = 1;
   loadData(currentAPI, currentPage, currentLimit);
 }
 
 // ================================
-// 🔍 SEARCH + DATE FILTER
+// 🔍 FILTER
 // ================================
 async function applyFilter() {
 
@@ -203,10 +202,10 @@ async function applyFilter() {
 
     let html = "";
 
-    json.data.forEach((row, index) => {
+    json.data.forEach((row, i) => {
       html += `
         <tr>
-          <td>${index + 1}</td>
+          <td>${i + 1}</td>
           <td>${row.mobile_number}</td>
           <td>${row.waba_number}</td>
           <td>${formatDate(row.created_at)}</td>
@@ -224,16 +223,36 @@ async function applyFilter() {
 }
 
 // ================================
-// 📂 TAB SWITCHING
+// 📂 TAB BINDING (🔥 MAIN FIX)
 // ================================
-function loadOffer() {
-  loadData("getOfferVisit");
-}
+document.addEventListener("DOMContentLoaded", () => {
 
-function loadStore() {
+  const offerTab = document.getElementById("offerTab");
+  const storeTab = document.getElementById("storeTab");
+  const loyaltyTab = document.getElementById("loyaltyTab");
+
+  if (offerTab) {
+    offerTab.addEventListener("click", () => {
+      console.log("👉 Offer clicked");
+      loadData("getOfferVisit");
+    });
+  }
+
+  if (storeTab) {
+    storeTab.addEventListener("click", () => {
+      console.log("👉 Store clicked");
+      loadData("getStoreVisit");
+    });
+  }
+
+  if (loyaltyTab) {
+    loyaltyTab.addEventListener("click", () => {
+      console.log("👉 Loyalty clicked");
+      loadData("getLoyaltyVisit");
+    });
+  }
+
+  // ✅ DEFAULT LOAD
   loadData("getStoreVisit");
-}
 
-function loadLoyalty() {
-  loadData("getLoyaltyVisit");
-}
+});
