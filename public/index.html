@@ -161,63 +161,73 @@ if (!localStorage.getItem("user")) {
 }
 </script>
 
+<!-- SIDEBAR -->
 <div class="sidebar">
   <div class="logo">
     <img src="https://warcssm.1xtel.co/media/media/2b47ba00-2481-4131-a600-0d2ebd01f0b5/OneXtel_Logo_P.jpg">
   </div>
 
   <div class="menu">
-    <div class="active">Upload</div>
-    <div>Nearest Store</div>
-    <div>Offer</div>
-    <div>Loyalty Points</div>
+    <div class="active" onclick="switchTab('upload')">Upload</div>
+    <div onclick="switchTab('store')">Nearest Store</div>
+    <div onclick="switchTab('offer')">Offer</div>
+    <div onclick="switchTab('loyalty')">Loyalty Points</div>
   </div>
 </div>
 
+<!-- MAIN -->
 <div class="main">
 
   <div class="header">
-    <h3>Upload Center</h3>
+    <h3 id="sectionTitle">Upload Center</h3>
     <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 
   <div class="filters">
-    <input type="text" placeholder="Search (future)">
+    <input type="text" placeholder="Search">
     <input type="date">
     <button class="btn-refresh" onclick="refreshData()">Refresh</button>
   </div>
 
   <div class="card">
 
-    <h3>Upload PDF</h3>
+    <!-- UPLOAD SECTION -->
+    <div id="uploadSection">
 
-    <div class="upload-box" id="dropZone">
-      <div class="upload-icon">📄</div>
-      <div>Drag & Drop PDF here</div>
-      <small>or click to browse</small>
-      <input type="file" id="pdfFile" hidden>
-      <div id="fileName" class="file-name"></div>
-    </div>
+      <h3>Upload PDF</h3>
 
-    <button class="btn-upload" onclick="uploadPDF()">Upload</button>
-
-    <!-- ✅ PROGRESS BAR ADDED -->
-    <div id="uploadProgressContainer" style="display:none; margin-top:15px;">
-      <div style="font-size:12px; margin-bottom:5px;">
-        Uploading... <span id="progressText">0%</span>
+      <div class="upload-box" id="dropZone">
+        <div class="upload-icon">📄</div>
+        <div>Drag & Drop PDF here</div>
+        <small>or click to browse</small>
+        <input type="file" id="pdfFile" hidden>
+        <div id="fileName" class="file-name"></div>
       </div>
 
-      <div style="width:100%; height:8px; background:#eee; border-radius:5px; overflow:hidden;">
-        <div id="progressBar" style="height:100%; width:0%; background:#D56269;"></div>
+      <button class="btn-upload" onclick="uploadPDF()">Upload</button>
+
+      <div id="uploadProgressContainer" style="display:none; margin-top:15px;">
+        <div style="font-size:12px; margin-bottom:5px;">
+          Uploading... <span id="progressText">0%</span>
+        </div>
+
+        <div style="width:100%; height:8px; background:#eee;">
+          <div id="progressBar" style="height:100%; width:0%; background:#D56269;"></div>
+        </div>
       </div>
+
+      <p id="result"></p>
+
     </div>
 
-    <p id="result"></p>
+    <!-- DYNAMIC DATA -->
+    <div id="dynamicContent" style="display:none;"></div>
 
   </div>
 
 </div>
 
+<!-- ERROR MODAL -->
 <div id="errorModal">
   <div class="modal-box">
     <p id="errorText"></p>
@@ -243,12 +253,38 @@ function closeError() {
   document.getElementById("errorModal").style.display = "none";
 }
 
-function refreshData() {
-  document.getElementById("fileName").innerText = "";
-  document.getElementById("pdfFile").value = "";
-  document.getElementById("result").innerText = "";
+
+// =============================
+// TAB SWITCH LOGIC
+// =============================
+function switchTab(tab) {
+
+  document.querySelectorAll(".menu div").forEach(el => el.classList.remove("active"));
+  event.target.classList.add("active");
+
+  const uploadSection = document.getElementById("uploadSection");
+  const dynamic = document.getElementById("dynamicContent");
+
+  if (tab === "upload") {
+    document.getElementById("sectionTitle").innerText = "Upload Center";
+    uploadSection.style.display = "block";
+    dynamic.style.display = "none";
+    return;
+  }
+
+  uploadSection.style.display = "none";
+  dynamic.style.display = "block";
+  dynamic.innerHTML = "Loading...";
+
+  if (tab === "store") loadData("store");
+  if (tab === "offer") loadData("offer");
+  if (tab === "loyalty") loadData("loyalty");
 }
 
+
+// =============================
+// DRAG DROP
+// =============================
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("pdfFile");
 
