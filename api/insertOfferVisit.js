@@ -34,7 +34,7 @@ export default async function handler(req, res) {
       .insert([{
         mobile_number,
         waba_number,
-        module_name: 'offer'
+        module_name: 'Offer'
       }]);
 
     if (error) {
