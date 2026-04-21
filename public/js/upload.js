@@ -1,13 +1,15 @@
 // ===============================
-// ✅ GLOBAL VARIABLES
+// GLOBAL VARIABLES
 // ===============================
 let currentPage = 1;
 let pageSize = 10;
+let totalRecords = 0;
+let currentType = "offer";
 let fullData = [];
 
 
 // ===============================
-// ✅ ERROR POPUP
+// ERROR POPUP
 // ===============================
 function showError(msg) {
   alert(msg);
@@ -15,7 +17,7 @@ function showError(msg) {
 
 
 // ===============================
-// ✅ PDF UPLOAD WITH PROGRESS
+// PDF UPLOAD (WITH PROGRESS)
 // ===============================
 async function uploadPDF() {
 
@@ -23,29 +25,22 @@ async function uploadPDF() {
   const file = fileInput.files[0];
   const btn = document.querySelector(".btn-upload");
 
-  if (!file) {
-    showError("Please select a file");
-    return;
-  }
+  if (!file) return showError("Please select a file");
 
   const isPDF =
     file.type === "application/pdf" ||
     file.name.toLowerCase().endsWith(".pdf");
 
-  if (!isPDF) {
-    showError("Only PDF files allowed");
-    return;
-  }
+  if (!isPDF) return showError("Only PDF files allowed");
 
   if (file.size > 10 * 1024 * 1024) {
-    showError("Max file size is 10MB");
-    return;
+    return showError("Max file size is 10MB");
   }
 
   const formData = new FormData();
   formData.append("file", file);
 
-  // UI Progress Start
+  // UI progress start
   document.getElementById("uploadProgressContainer").style.display = "block";
   document.getElementById("progressBar").style.width = "0%";
   document.getElementById("progressText").innerText = "0%";
@@ -54,11 +49,9 @@ async function uploadPDF() {
   btn.innerText = "Uploading...";
 
   try {
-
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/uploadPDF", true);
 
-    // PROGRESS
     xhr.upload.onprogress = function (event) {
       if (event.lengthComputable) {
         const percent = Math.round((event.loaded / event.total) * 100);
@@ -87,7 +80,6 @@ async function uploadPDF() {
         showError("Upload failed");
       }
 
-      // Hide progress after 1.5 sec
       setTimeout(() => {
         document.getElementById("uploadProgressContainer").style.display = "none";
       }, 1500);
@@ -110,9 +102,11 @@ async function uploadPDF() {
 
 
 // ===============================
-// ✅ LOAD DATA FROM API
+// LOAD DATA (SERVER PAGINATION)
 // ===============================
 async function loadData(type) {
+
+  currentType = type;
 
   let api = "";
 
@@ -121,13 +115,21 @@ async function loadData(type) {
   if (type === "loyalty") api = "/api/getLoyaltyVisit";
 
   try {
-    const res = await fetch(api);
+    console.log("🚀 Fetching:", api, "Page:", currentPage);
+
+    const res = await fetch(`${api}?page=${currentPage}&limit=${pageSize}`);
     const data = await res.json();
 
-    fullData = data.data || [];
-    currentPage = 1;
+    if (!data.success) {
+      console.log("❌ API ERROR");
+      return;
+    }
 
-    document.getElementById("dynamicContent").style.display = "block";
+    fullData = data.data || [];
+    totalRecords = data.total || 0;
+
+    document.getElementById("uploadSection").style.display = "none";
+    document.getElementById("dataSection").style.display = "block";
 
     renderTable();
 
@@ -138,19 +140,14 @@ async function loadData(type) {
 
 
 // ===============================
-// ✅ TABLE RENDER
+// TABLE RENDER
 // ===============================
 function renderTable() {
-
-  const start = (currentPage - 1) * pageSize;
-  const end = start + pageSize;
-
-  const pageData = fullData.slice(start, end);
 
   const tbody = document.getElementById("tableBody");
   tbody.innerHTML = "";
 
-  pageData.forEach((item, index) => {
+  fullData.forEach((item, index) => {
 
     const dateObj = new Date(item.created_at);
 
@@ -164,7 +161,7 @@ function renderTable() {
 
     tbody.innerHTML += `
       <tr style="border-bottom:1px solid #eee;">
-        <td>${start + index + 1}</td>
+        <td>${(currentPage - 1) * pageSize + index + 1}</td>
         <td>${item.mobile_number}</td>
         <td>${item.waba_number}</td>
         <td>${item.module_name}</td>
@@ -179,42 +176,42 @@ function renderTable() {
 
 
 // ===============================
-// ✅ PAGINATION
+// PAGINATION
 // ===============================
 function updatePageInfo() {
-  const totalPages = Math.ceil(fullData.length / pageSize);
+  const totalPages = Math.ceil(totalRecords / pageSize);
   document.getElementById("pageInfo").innerText =
     `Page ${currentPage} of ${totalPages}`;
 }
 
 function nextPage() {
-  const totalPages = Math.ceil(fullData.length / pageSize);
+  const totalPages = Math.ceil(totalRecords / pageSize);
   if (currentPage < totalPages) {
     currentPage++;
-    renderTable();
+    loadData(currentType);
   }
 }
 
 function prevPage() {
   if (currentPage > 1) {
     currentPage--;
-    renderTable();
+    loadData(currentType);
   }
 }
 
 function changePageSize() {
   pageSize = parseInt(document.getElementById("pageSize").value);
   currentPage = 1;
-  renderTable();
+  loadData(currentType);
 }
 
 
 // ===============================
-// ✅ SEARCH FILTER
+// SEARCH (CURRENT PAGE)
 // ===============================
 function filterData() {
 
-  const query = document.querySelector('.filters input').value.toLowerCase();
+  const query = document.querySelector('.controls input').value.toLowerCase();
 
   if (!query) {
     renderTable();
@@ -227,20 +224,10 @@ function filterData() {
     item.module_name.toLowerCase().includes(query)
   );
 
-  currentPage = 1;
-  renderFiltered(filtered);
-}
-
-
-// ===============================
-// ✅ RENDER FILTERED DATA
-// ===============================
-function renderFiltered(data) {
-
   const tbody = document.getElementById("tableBody");
   tbody.innerHTML = "";
 
-  data.forEach((item, index) => {
+  filtered.forEach((item, index) => {
 
     const dateObj = new Date(item.created_at);
 
@@ -253,7 +240,7 @@ function renderFiltered(data) {
     });
 
     tbody.innerHTML += `
-      <tr style="border-bottom:1px solid #eee;">
+      <tr>
         <td>${index + 1}</td>
         <td>${item.mobile_number}</td>
         <td>${item.waba_number}</td>
@@ -265,5 +252,5 @@ function renderFiltered(data) {
   });
 
   document.getElementById("pageInfo").innerText =
-    `Filtered ${data.length} results`;
+    `Filtered ${filtered.length} results`;
 }
