@@ -5,9 +5,7 @@ import FormData from 'form-data';
 import fetch from 'node-fetch';
 
 export const config = {
-  api: {
-    bodyParser: false
-  }
+  api: { bodyParser: false }
 };
 
 const supabase = createClient(
@@ -18,74 +16,68 @@ const supabase = createClient(
 export default async function handler(req, res) {
 
   console.log("🚀 API HIT: uploadPDF");
+  console.log("👉 METHOD:", req.method);
 
   if (req.method !== 'POST') {
-    return res.status(405).json({
-      success: false,
-      message: "Use POST method"
-    });
+    console.log("❌ Invalid method");
+    return res.status(405).json({ success: false, message: "Use POST" });
   }
 
   try {
 
-    // ✅ Increased file size + stable parsing
     const form = formidable({
-      multiples: false,
-      maxFileSize: 15 * 1024 * 1024, // 15MB
+      maxFileSize: 15 * 1024 * 1024,
       keepExtensions: true
     });
 
     form.parse(req, async (err, fields, files) => {
 
       if (err) {
-        console.log("❌ Form parse error:", err);
+        console.log("❌ FORM PARSE ERROR:", err);
         return res.status(400).json({
           success: false,
           message: "File parsing failed"
         });
       }
 
-      const uploadedFile = Array.isArray(files.file)
-        ? files.file[0]
-        : files.file;
+      console.log("📦 FILES RECEIVED:", files);
 
-      if (!uploadedFile) {
-        console.log("❌ No file received");
+      const file = Array.isArray(files.file) ? files.file[0] : files.file;
+
+      if (!file) {
+        console.log("❌ No file found in request");
         return res.status(400).json({
           success: false,
           message: "No file uploaded"
         });
       }
 
-      console.log("📄 File:", uploadedFile.originalFilename);
-      console.log("📦 Size:", uploadedFile.size);
+      console.log("📄 File name:", file.originalFilename);
+      console.log("📄 MIME:", file.mimetype);
+      console.log("📄 Size:", file.size);
 
-      // ✅ Robust PDF validation
       const isPDF =
-        uploadedFile.mimetype === 'application/pdf' ||
-        uploadedFile.originalFilename?.toLowerCase().endsWith('.pdf');
+        file.mimetype === 'application/pdf' ||
+        file.originalFilename?.toLowerCase().endsWith('.pdf');
 
       if (!isPDF) {
+        console.log("❌ File validation failed (not PDF)");
         return res.status(400).json({
           success: false,
           message: "Only PDF allowed"
         });
       }
 
-      // ✅ Prepare external API request
+      // 🔥 Prepare external API request
       const formData = new FormData();
       formData.append("phone_number", process.env.ONEX_PHONE);
 
-      formData.append("file", fs.createReadStream(uploadedFile.filepath), {
-        filename: uploadedFile.originalFilename,
+      formData.append("file", fs.createReadStream(file.filepath), {
+        filename: file.originalFilename,
         contentType: 'application/pdf'
       });
 
       console.log("📡 Calling external API...");
-
-      // ✅ Timeout protection (CRITICAL FIX)
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000); // 30 sec
 
       const response = await fetch('https://api.onexaura.com/wa/mediaupload', {
         method: 'POST',
@@ -93,35 +85,33 @@ export default async function handler(req, res) {
           'accept': 'application/json',
           'apikey': process.env.ONEX_API_KEY
         },
-        body: formData,
-        signal: controller.signal
+        body: formData
       });
 
-      clearTimeout(timeout);
+      console.log("📡 External API status:", response.status);
 
       const result = await response.json();
 
-      console.log("📥 API RESPONSE:", JSON.stringify(result, null, 2));
+      console.log("📥 External API response:", JSON.stringify(result, null, 2));
 
       const fileUrl = result?.onextel_media_url;
 
       if (!fileUrl) {
-        console.log("❌ No URL returned");
+        console.log("❌ URL not returned from API");
         return res.status(500).json({
           success: false,
-          message: "Upload API failed",
-          raw: result
+          message: "Upload API failed"
         });
       }
 
-      console.log("✅ URL:", fileUrl);
+      console.log("✅ URL received:", fileUrl);
 
-      // ✅ Insert into DB
+      // 🔥 Insert into DB
+      console.log("📡 Inserting into DB...");
+
       const { error: dbError } = await supabase
         .from('pdf_uploads')
-        .insert([
-          { file_url: fileUrl }
-        ]);
+        .insert([{ file_url: fileUrl }]);
 
       if (dbError) {
         console.log("❌ DB ERROR:", dbError);
@@ -141,16 +131,7 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-
     console.log("🔥 SERVER ERROR:", err);
-
-    // ✅ Handle timeout specifically
-    if (err.name === 'AbortError') {
-      return res.status(500).json({
-        success: false,
-        message: "Upload timeout. Try smaller file or retry."
-      });
-    }
 
     return res.status(500).json({
       success: false,
