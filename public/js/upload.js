@@ -1,46 +1,35 @@
-// ===============================
-// GLOBAL VARIABLES
-// ===============================
-let currentPage = 1;
-let pageSize = 10;
-let totalRecords = 0;
-let currentType = "offer";
-let fullData = [];
-
-
-// ===============================
-// ERROR POPUP
-// ===============================
-function showError(msg) {
-  alert(msg);
-}
-
-
-// ===============================
-// PDF UPLOAD (WITH PROGRESS)
-// ===============================
+// ================================
+// 🚀 FILE UPLOAD FUNCTION
+// ================================
 async function uploadPDF() {
 
   const fileInput = document.getElementById("pdfFile");
   const file = fileInput.files[0];
   const btn = document.querySelector(".btn-upload");
 
-  if (!file) return showError("Please select a file");
+  if (!file) {
+    alert("Please select a file");
+    return;
+  }
 
   const isPDF =
     file.type === "application/pdf" ||
     file.name.toLowerCase().endsWith(".pdf");
 
-  if (!isPDF) return showError("Only PDF files allowed");
+  if (!isPDF) {
+    alert("Only PDF files allowed");
+    return;
+  }
 
   if (file.size > 10 * 1024 * 1024) {
-    return showError("Max file size is 10MB");
+    alert("Max file size is 10MB");
+    return;
   }
 
   const formData = new FormData();
   formData.append("file", file);
 
-  // UI progress start
+  // Progress UI
   document.getElementById("uploadProgressContainer").style.display = "block";
   document.getElementById("progressBar").style.width = "0%";
   document.getElementById("progressText").innerText = "0%";
@@ -52,6 +41,7 @@ async function uploadPDF() {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/uploadPDF", true);
 
+    // 📊 Progress
     xhr.upload.onprogress = function (event) {
       if (event.lengthComputable) {
         const percent = Math.round((event.loaded / event.total) * 100);
@@ -61,23 +51,20 @@ async function uploadPDF() {
     };
 
     xhr.onload = function () {
-
       btn.disabled = false;
       btn.innerText = "Upload";
 
       if (xhr.status === 200) {
-
         const data = JSON.parse(xhr.responseText);
 
-        if (data.success && data.url) {
+        if (data.success) {
           document.getElementById("result").innerHTML =
             `<b>Uploaded:</b><br><a href="${data.url}" target="_blank">${data.url}</a>`;
         } else {
-          showError(data.message || "Upload failed");
+          alert(data.message || "Upload failed");
         }
-
       } else {
-        showError("Upload failed");
+        alert("Upload failed");
       }
 
       setTimeout(() => {
@@ -88,7 +75,7 @@ async function uploadPDF() {
     xhr.onerror = function () {
       btn.disabled = false;
       btn.innerText = "Upload";
-      showError("Network error");
+      alert("Network error");
     };
 
     xhr.send(formData);
@@ -96,161 +83,157 @@ async function uploadPDF() {
   } catch (err) {
     btn.disabled = false;
     btn.innerText = "Upload";
-    showError("Server error");
+    alert("Server error");
   }
 }
 
+// ================================
+// 📅 DATE FORMAT (IST)
+// ================================
+function formatDate(timestamp) {
+  const date = new Date(timestamp);
+  return date.toLocaleDateString("en-GB", {
+    timeZone: "Asia/Kolkata"
+  });
+}
 
-// ===============================
-// LOAD DATA (SERVER PAGINATION)
-// ===============================
-async function loadData(type) {
+function formatTime(timestamp) {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString("en-GB", {
+    timeZone: "Asia/Kolkata",
+    hour12: false
+  });
+}
 
-  currentType = type;
+// ================================
+// 📊 GLOBAL STATE
+// ================================
+let currentPage = 1;
+let currentLimit = 10;
+let currentAPI = "";
 
-  let api = "";
+// ================================
+// 🔄 LOAD DATA GENERIC FUNCTION
+// ================================
+async function loadData(apiName, page = 1, limit = 10) {
 
-  if (type === "offer") api = "/api/getOfferVisit";
-  if (type === "store") api = "/api/getStoreVisit";
-  if (type === "loyalty") api = "/api/getLoyaltyVisit";
+  currentAPI = apiName;
+  currentPage = page;
+  currentLimit = limit;
+
+  const tableBody = document.getElementById("tableBody");
+  tableBody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
 
   try {
-    console.log("🚀 Fetching:", api, "Page:", currentPage);
+    const res = await fetch(`/api/${apiName}?page=${page}&limit=${limit}`);
+    const json = await res.json();
 
-    const res = await fetch(`${api}?page=${currentPage}&limit=${pageSize}`);
-    const data = await res.json();
-
-    if (!data.success) {
-      console.log("❌ API ERROR");
+    if (!json.success || !json.data) {
+      tableBody.innerHTML = "<tr><td colspan='6'>No data found</td></tr>";
       return;
     }
 
-    fullData = data.data || [];
-    totalRecords = data.total || 0;
+    const rows = json.data;
 
-    document.getElementById("uploadSection").style.display = "none";
-    document.getElementById("dataSection").style.display = "block";
+    let html = "";
 
-    renderTable();
+    rows.forEach((row, index) => {
+      html += `
+        <tr>
+          <td>${(page - 1) * limit + index + 1}</td>
+          <td>${row.mobile_number || "-"}</td>
+          <td>${row.waba_number || "-"}</td>
+          <td>${formatDate(row.created_at)}</td>
+          <td>${formatTime(row.created_at)}</td>
+          <td><span class="status-badge">Captured</span></td>
+        </tr>
+      `;
+    });
+
+    tableBody.innerHTML = html;
 
   } catch (err) {
-    console.log("❌ FETCH ERROR:", err);
+    tableBody.innerHTML = "<tr><td colspan='6'>Error loading data</td></tr>";
   }
 }
 
-
-// ===============================
-// TABLE RENDER
-// ===============================
-function renderTable() {
-
-  const tbody = document.getElementById("tableBody");
-  tbody.innerHTML = "";
-
-  fullData.forEach((item, index) => {
-
-    const dateObj = new Date(item.created_at);
-
-    const date = dateObj.toLocaleDateString("en-GB", {
-      timeZone: "Asia/Kolkata"
-    });
-
-    const time = dateObj.toLocaleTimeString("en-GB", {
-      timeZone: "Asia/Kolkata"
-    });
-
-    tbody.innerHTML += `
-      <tr style="border-bottom:1px solid #eee;">
-        <td>${(currentPage - 1) * pageSize + index + 1}</td>
-        <td>${item.mobile_number}</td>
-        <td>${item.waba_number}</td>
-        <td>${item.module_name}</td>
-        <td>${date}</td>
-        <td>${time}</td>
-      </tr>
-    `;
-  });
-
-  updatePageInfo();
-}
-
-
-// ===============================
-// PAGINATION
-// ===============================
-function updatePageInfo() {
-  const totalPages = Math.ceil(totalRecords / pageSize);
-  document.getElementById("pageInfo").innerText =
-    `Page ${currentPage} of ${totalPages}`;
-}
-
+// ================================
+// 🔁 PAGINATION
+// ================================
 function nextPage() {
-  const totalPages = Math.ceil(totalRecords / pageSize);
-  if (currentPage < totalPages) {
-    currentPage++;
-    loadData(currentType);
-  }
+  currentPage++;
+  loadData(currentAPI, currentPage, currentLimit);
 }
 
 function prevPage() {
   if (currentPage > 1) {
     currentPage--;
-    loadData(currentType);
+    loadData(currentAPI, currentPage, currentLimit);
   }
 }
 
-function changePageSize() {
-  pageSize = parseInt(document.getElementById("pageSize").value);
+function changeLimit(limit) {
+  currentLimit = parseInt(limit);
   currentPage = 1;
-  loadData(currentType);
+  loadData(currentAPI, currentPage, currentLimit);
 }
 
+// ================================
+// 🔍 SEARCH + DATE FILTER
+// ================================
+async function applyFilter() {
 
-// ===============================
-// SEARCH (CURRENT PAGE)
-// ===============================
-function filterData() {
+  const search = document.getElementById("searchInput").value;
+  const date = document.getElementById("dateInput").value;
 
-  const query = document.querySelector('.controls input').value.toLowerCase();
+  const tableBody = document.getElementById("tableBody");
+  tableBody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
 
-  if (!query) {
-    renderTable();
-    return;
+  try {
+    const res = await fetch(
+      `/api/${currentAPI}?search=${search}&date=${date}&page=1&limit=${currentLimit}`
+    );
+
+    const json = await res.json();
+
+    if (!json.success || !json.data) {
+      tableBody.innerHTML = "<tr><td colspan='6'>No results</td></tr>";
+      return;
+    }
+
+    let html = "";
+
+    json.data.forEach((row, index) => {
+      html += `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${row.mobile_number}</td>
+          <td>${row.waba_number}</td>
+          <td>${formatDate(row.created_at)}</td>
+          <td>${formatTime(row.created_at)}</td>
+          <td><span class="status-badge">Filtered</span></td>
+        </tr>
+      `;
+    });
+
+    tableBody.innerHTML = html;
+
+  } catch (err) {
+    tableBody.innerHTML = "<tr><td colspan='6'>Filter error</td></tr>";
   }
+}
 
-  const filtered = fullData.filter(item =>
-    item.mobile_number.includes(query) ||
-    item.waba_number.includes(query) ||
-    item.module_name.toLowerCase().includes(query)
-  );
+// ================================
+// 📂 TAB SWITCHING
+// ================================
+function loadOffer() {
+  loadData("getOfferVisit");
+}
 
-  const tbody = document.getElementById("tableBody");
-  tbody.innerHTML = "";
+function loadStore() {
+  loadData("getStoreVisit");
+}
 
-  filtered.forEach((item, index) => {
-
-    const dateObj = new Date(item.created_at);
-
-    const date = dateObj.toLocaleDateString("en-GB", {
-      timeZone: "Asia/Kolkata"
-    });
-
-    const time = dateObj.toLocaleTimeString("en-GB", {
-      timeZone: "Asia/Kolkata"
-    });
-
-    tbody.innerHTML += `
-      <tr>
-        <td>${index + 1}</td>
-        <td>${item.mobile_number}</td>
-        <td>${item.waba_number}</td>
-        <td>${item.module_name}</td>
-        <td>${date}</td>
-        <td>${time}</td>
-      </tr>
-    `;
-  });
-
-  document.getElementById("pageInfo").innerText =
-    `Filtered ${filtered.length} results`;
+function loadLoyalty() {
+  loadData("getLoyaltyVisit");
 }
