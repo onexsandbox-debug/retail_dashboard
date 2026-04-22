@@ -1,21 +1,22 @@
 // ================================
-// 🚀 FILE UPLOAD
+// 🚀 FILE UPLOAD LOGIC
 // ================================
 async function uploadPDF() {
-
   const fileInput = document.getElementById("pdfFile");
   const file = fileInput.files[0];
   const btn = document.querySelector(".btn-upload");
+  const resultDiv = document.getElementById("result");
+  const progressContainer = document.getElementById("uploadProgressContainer");
+  const progressBar = document.getElementById("progressBar");
+  const progressText = document.getElementById("progressText");
 
   if (!file) {
-    alert("Please select a file");
+    alert("Please select a file first");
     return;
   }
 
-  const isPDF =
-    file.type === "application/pdf" ||
-    file.name.toLowerCase().endsWith(".pdf");
-
+  // Validation
+  const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
   if (!isPDF) {
     alert("Only PDF files allowed");
     return;
@@ -29,76 +30,62 @@ async function uploadPDF() {
   const formData = new FormData();
   formData.append("file", file);
 
-  // Progress UI
-  document.getElementById("uploadProgressContainer").style.display = "block";
-  document.getElementById("progressBar").style.width = "0%";
-  document.getElementById("progressText").innerText = "0%";
-
+  // UI Setup
+  resultDiv.innerHTML = "";
+  progressContainer.style.display = "block";
+  progressBar.style.width = "0%";
+  progressText.innerText = "0%";
   btn.disabled = true;
   btn.innerText = "Uploading...";
 
-  try {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/uploadPDF", true);
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST", "/api/uploadPDF", true);
 
-    xhr.upload.onprogress = function (event) {
-      if (event.lengthComputable) {
-        const percent = Math.round((event.loaded / event.total) * 100);
-        document.getElementById("progressBar").style.width = percent + "%";
-        document.getElementById("progressText").innerText = percent + "%";
-      }
-    };
-
-    xhr.onload = function () {
-
-  btn.disabled = false;
-  btn.innerText = "Upload";
-
-  if (xhr.status === 200) {
-
-    const data = JSON.parse(xhr.responseText);
-
-    if (data.success) {
-
-      // ✅ FIX: KEEP FILE NAME AFTER UPLOAD
-      const fileInput = document.getElementById("pdfFile");
-
-      if (fileInput.files && fileInput.files.length > 0) {
-        document.getElementById("fileName").innerText =
-          fileInput.files[0].name;
-      }
-
-      // ✅ Optional success message
-      document.getElementById("result").innerHTML =
-        `<span style="color:green;">✔ Upload successful</span>`;
-
-    } else {
-      showError(data.message || "Upload failed");
+  xhr.upload.onprogress = function (event) {
+    if (event.lengthComputable) {
+      const percent = Math.round((event.loaded / event.total) * 100);
+      progressBar.style.width = percent + "%";
+      progressText.innerText = percent + "%";
     }
+  };
 
-  } else {
-    showError("Upload failed");
-  }
-
-  // ✅ RESET PROGRESS BAR (keep UI clean)
-  setTimeout(() => {
-    document.getElementById("uploadProgressContainer").style.display = "none";
-  }, 1500);
-};
-
-    xhr.onerror = function () {
-      btn.disabled = false;
-      btn.innerText = "Upload";
-      alert("Network error");
-    };
-
-    xhr.send(formData);
-
-  } catch (err) {
+  xhr.onload = function () {
     btn.disabled = false;
     btn.innerText = "Upload";
-    alert("Server error");
-  }
+
+    if (xhr.status === 200) {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (data.success) {
+          // ✅ FIX: SUCCESS MESSAGE AND URL
+          resultDiv.innerHTML = `
+            <div style="color:green;">✔ Upload successful</div>
+            <div style="font-size:11px; margin-top:5px; word-break:break-all;">
+              <strong>File URL:</strong> <a href="${data.url}" target="_blank">${data.url}</a>
+            </div>`;
+        } else {
+          resultDiv.innerHTML = `<span style="color:red;">❌ ${data.message || 'Upload failed'}</span>`;
+        }
+      } catch (e) {
+        resultDiv.innerHTML = `<span style="color:red;">❌ Error parsing response</span>`;
+      }
+    } else {
+      resultDiv.innerHTML = `<span style="color:red;">❌ Server error: ${xhr.status}</span>`;
+    }
+
+    // Hide progress after short delay
+    setTimeout(() => {
+      progressContainer.style.display = "none";
+    }, 2000);
+  };
+
+  xhr.onerror = function () {
+    btn.disabled = false;
+    btn.innerText = "Upload";
+    resultDiv.innerHTML = `<span style="color:red;">❌ Network error occurred</span>`;
+  };
+
+  xhr.send(formData);
 }
 
 // ================================
