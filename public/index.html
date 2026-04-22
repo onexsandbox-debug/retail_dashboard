@@ -6,140 +6,116 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&display=swap" rel="stylesheet">
 
   <style>
-    body {
-      margin: 0;
-      font-family: 'Manrope', sans-serif;
-      background: #f4f6f9;
-      display: flex;
-      font-size: 13px;
-    }
+    body { margin:0; font-family:'Manrope', sans-serif; background:#f4f6f9; display:flex; font-size:13px; }
 
-    .sidebar {
-      width: 240px;
-      background: white;
-      height: 100vh;
-      border-right: 1px solid #eee;
-    }
+    .sidebar { width:240px; background:white; height:100vh; border-right:1px solid #eee; }
+    .logo { padding:15px 20px; }
+    .logo img { max-width:140px; }
 
-    .logo { padding: 15px 20px; }
-    .logo img { max-width: 140px; }
+    .menu { padding:10px; }
+    .menu div { padding:12px; margin-bottom:5px; cursor:pointer; border-radius:6px; }
+    .menu div:hover { background:#f5f5f5; }
 
-    .menu { padding: 10px; }
-    .menu div {
-      padding: 12px;
-      margin-bottom: 5px;
-      cursor: pointer;
-      border-radius: 6px;
-    }
+    .active { background:#ffe6e6; color:#e60023; font-weight:600; }
 
-    .menu div:hover { background: #f5f5f5; }
+    .main { flex:1; padding:20px; }
 
-    .active {
-      background: #ffe6e6;
-      color: #e60023;
-      font-weight: 600;
-    }
-
-    .main { flex: 1; padding: 20px; }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
+    .header { display:flex; justify-content:space-between; margin-bottom:20px; }
 
     .logout-btn {
-      background: #c62828;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
+      background:#c62828;
+      color:white;
+      border:none;
+      padding:8px 12px;
+      border-radius:6px;
+      cursor:pointer;
     }
 
     .filters {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      flex-wrap: wrap;
+      display:flex;
+      gap:10px;
+      margin-bottom:15px;
+      background:white;
+      padding:15px;
+      border-radius:10px;
+      flex-wrap:wrap;
     }
 
     .filters input, .filters select {
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+      padding:8px;
+      border-radius:6px;
+      border:1px solid #ccc;
     }
 
-    .btn {
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .btn-filter { background: #ff7a00; color: white; }
-    .btn-refresh { background: #1f4e8c; color: white; }
+    .btn { padding:8px 12px; border-radius:6px; border:none; cursor:pointer; }
+    .btn-filter { background:#ff7a00; color:white; }
+    .btn-refresh { background:#1f4e8c; color:white; }
 
     table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
+      width:100%;
+      border-collapse:collapse;
+      background:white;
+      border-radius:10px;
+      overflow:hidden;
     }
 
-    th {
-      background: #f5f7fb;
-      padding: 12px;
-      text-align: left;
-    }
+    th { background:#f5f7fb; padding:12px; text-align:left; }
+    td { padding:12px; border-bottom:1px solid #eee; }
 
-    td {
-      padding: 12px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .section { display: none; }
-    .active-section { display: block; }
+    .section { display:none; }
+    .active-section { display:block; }
 
     .pagination {
-      margin-top: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      margin-top:15px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
     }
 
-    /* ✅ Upload Styling (Restored) */
+    /* ✅ Upload FIX */
     .upload-box {
-      border: 2px dashed #ccc;
-      border-radius: 12px;
-      padding: 30px;
-      text-align: center;
-      cursor: pointer;
-      transition: 0.3s;
+      border:2px dashed #ccc;
+      border-radius:12px;
+      padding:30px;
+      text-align:center;
+      cursor:pointer;
+      transition:0.3s;
     }
 
     .upload-box:hover {
-      border-color: #D56269;
-      background: #fff7f7;
+      border-color:#D56269;
+      background:#fff7f7;
     }
 
     .upload-box.dragover {
-      border-color: #D56269;
-      background: #ffeaea;
+      border-color:#D56269;
+      background:#ffeaea;
     }
 
     .upload-icon {
-      font-size: 30px;
-      margin-bottom: 10px;
+      font-size:30px;
+      margin-bottom:10px;
+      color:#D56269;
     }
 
     .file-name {
-      margin-top: 10px;
-      font-weight: 600;
+      margin-top:10px;
+      font-weight:600;
+    }
+
+    .btn-upload {
+      margin-top:15px;
+      padding:10px 16px;
+      background:#D56269;
+      color:white;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+    }
+
+    #uploadProgressContainer {
+      display:none;
+      margin-top:15px;
     }
 
   </style>
@@ -188,18 +164,18 @@
 
     <div class="upload-box" id="dropZone">
       <div class="upload-icon">📄</div>
-      <div>Drag & Drop PDF here</div>
+      <div><b>Drag & Drop PDF here</b></div>
       <small>or click to browse</small>
       <input type="file" id="pdfFile" hidden>
       <div id="fileName" class="file-name"></div>
     </div>
 
-    <button class="btn btn-filter" onclick="uploadPDF()">Upload</button>
+    <button class="btn-upload" onclick="uploadPDF()">Upload</button>
 
-    <div id="uploadProgressContainer" style="display:none;margin-top:15px;">
+    <div id="uploadProgressContainer">
       <div>Uploading... <span id="progressText">0%</span></div>
-      <div style="width:100%;height:8px;background:#eee;">
-        <div id="progressBar" style="height:100%;width:0%;background:#D56269;"></div>
+      <div style="width:100%; height:8px; background:#eee;">
+        <div id="progressBar" style="height:100%; width:0%; background:#D56269;"></div>
       </div>
     </div>
 
@@ -214,17 +190,11 @@
 
 </div>
 
+<script src="/js/upload.js"></script>
+
 <script>
 
-let currentTab = 'upload';
-let page = 1;
-let limit = 10;
-
-// ======================
 function switchTab(tab, el) {
-
-  currentTab = tab;
-  page = 1;
 
   document.querySelectorAll(".menu div").forEach(e => e.classList.remove("active"));
   el.classList.add("active");
@@ -234,14 +204,10 @@ function switchTab(tab, el) {
   const filters = document.getElementById("filtersBar");
 
   if (tab === 'upload') {
-
     document.getElementById("upload").classList.add("active-section");
     document.getElementById("title").innerText = "Upload Center";
-
-    filters.style.display = "none"; // ✅ hide filter only here
-
+    filters.style.display = "none";
   } else {
-
     document.getElementById("dataSection").classList.add("active-section");
     filters.style.display = "flex";
 
@@ -250,89 +216,11 @@ function switchTab(tab, el) {
       tab === "offer" ? "Offer" :
       "Loyalty Points";
 
-    loadData();
+    loadData(tab);
   }
 }
 
-// ======================
-async function loadData() {
-
-  if (currentTab === 'upload') return;
-
-  const mobile = document.getElementById("mobile").value;
-
-  let api = {
-    store: "getStoreVisit",
-    offer: "getOfferVisit",
-    loyalty: "getLoyaltyVisit"
-  }[currentTab];
-
-  const res = await fetch(`/api/${api}?page=${page}&limit=${limit}&mobile=${mobile}`);
-  const json = await res.json();
-
-  renderTable(json.data || []);
-}
-
-// ======================
-function renderTable(data) {
-
-  let html = `
-  <table>
-    <thead>
-      <tr>
-        <th>S.No</th>
-        <th>Mobile</th>
-        <th>WABA</th>
-        <th>Date</th>
-        <th>Time</th>
-      </tr>
-    </thead>
-    <tbody>
-  `;
-
-  data.forEach((row, i) => {
-
-    const d = new Date(row.created_at);
-
-    html += `
-      <tr>
-        <td>${(page-1)*limit + i + 1}</td>
-        <td>${row.mobile_number}</td>
-        <td>${row.waba_number}</td>
-        <td>${d.toLocaleDateString("en-GB",{timeZone:"Asia/Kolkata"})}</td>
-        <td>${d.toLocaleTimeString("en-GB",{timeZone:"Asia/Kolkata"})}</td>
-      </tr>
-    `;
-  });
-
-  html += `</tbody></table>`;
-
-  html += `
-  <div class="pagination">
-    <div>
-      <button onclick="prev()">Prev</button>
-      Page ${page}
-      <button onclick="next()">Next</button>
-    </div>
-  </div>
-  `;
-
-  document.getElementById("tableContainer").innerHTML = html;
-}
-
-// ======================
-function changeLimit() {
-  limit = parseInt(document.getElementById("limit").value);
-  page = 1;
-  loadData();
-}
-
-function next() { page++; loadData(); }
-function prev() { if (page > 1) { page--; loadData(); } }
-
-// ======================
-// DRAG DROP (RESTORED)
-// ======================
+// Drag & drop (unchanged)
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("pdfFile");
 
@@ -342,15 +230,8 @@ fileInput.onchange = () => {
   document.getElementById("fileName").innerText = fileInput.files[0].name;
 };
 
-dropZone.ondragover = e => {
-  e.preventDefault();
-  dropZone.classList.add("dragover");
-};
-
-dropZone.ondragleave = () => {
-  dropZone.classList.remove("dragover");
-};
-
+dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add("dragover"); };
+dropZone.ondragleave = () => dropZone.classList.remove("dragover");
 dropZone.ondrop = e => {
   e.preventDefault();
   dropZone.classList.remove("dragover");
