@@ -1,159 +1,209 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Retail Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retail Dashboard | OneXtel</title>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { margin:0; font-family:'Manrope', sans-serif; background:#f4f6f9; display:flex; font-size:13px; }
-    .sidebar { width:240px; background:white; height:100vh; border-right:1px solid #eee; position: fixed; }
-    .logo { padding:15px 20px; }
-    .logo img { max-width:140px; }
-    .menu { padding:10px; }
-    .menu div { padding:12px; margin-bottom:5px; cursor:pointer; border-radius:6px; transition: 0.2s; }
+    :root {
+      --primary-red: #e60023;
+      --soft-red: #ffe6e6;
+      --accent-orange: #ff7a00;
+      --onex-blue: #1f4e8c;
+      --bg-light: #f4f6f9;
+      --border-color: #eee;
+    }
+
+    body { margin:0; font-family:'Manrope', sans-serif; background: var(--bg-light); display:flex; font-size:13px; color: #333; }
+
+    /* Sidebar */
+    .sidebar { width:240px; background:white; height:100vh; border-right:1px solid var(--border-color); position: fixed; left: 0; top: 0; }
+    .logo { padding:20px; border-bottom: 1px solid #f9f9f9; }
+    .logo img { max-width:160px; display: block; margin: 0 auto; }
+    .menu { padding:15px 10px; }
+    .menu div { padding:12px 15px; margin-bottom:8px; cursor:pointer; border-radius:8px; transition: 0.3s; font-weight: 500; }
     .menu div:hover { background:#f5f5f5; }
-    .active { background:#ffe6e6; color:#e60023; font-weight:600; }
-    .main { flex:1; padding:20px; margin-left: 240px; }
-    .header { display:flex; justify-content:space-between; margin-bottom:20px; align-items: center; }
-    .logout-btn { background:#c62828; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
-    .filters { display:none; gap:10px; margin-bottom:15px; background:white; padding:15px; border-radius:10px; flex-wrap:wrap; align-items: center; }
-    .filters input, .filters select { padding:8px; border-radius:6px; border:1px solid #ccc; }
-    .btn { padding:8px 12px; border-radius:6px; border:none; cursor:pointer; font-weight: 600; }
-    .btn-filter { background:#ff7a00; color:white; }
-    .btn-refresh { background:#1f4e8c; color:white; }
-    table { width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    th { background:#f5f7fb; padding:12px; text-align:left; color: #555; }
-    td { padding:12px; border-bottom:1px solid #eee; }
-    .section { display:none; }
+    .menu div.active { background: var(--soft-red); color: var(--primary-red); font-weight:700; }
+
+    /* Main Content */
+    .main { flex:1; padding:25px; margin-left: 240px; min-height: 100vh; box-sizing: border-box; }
+    .header { display:flex; justify-content:space-between; margin-bottom:25px; align-items: center; }
+    .header h3 { margin: 0; font-size: 20px; color: #111; }
+
+    .logout-btn { background: var(--primary-red); color:white; border:none; padding:10px 18px; border-radius:6px; cursor:pointer; font-weight: 600; transition: 0.2s; }
+    .logout-btn:hover { background: #c62828; box-shadow: 0 4px 12px rgba(230, 0, 35, 0.2); }
+
+    /* Filters Bar */
+    .filters { display:none; gap:12px; margin-bottom:20px; background:white; padding:18px; border-radius:12px; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .filters input, .filters select { padding:10px; border-radius:6px; border:1px solid #ddd; outline: none; }
+    .filters input:focus { border-color: var(--onex-blue); }
+    .btn { padding:10px 16px; border-radius:6px; border:none; cursor:pointer; font-weight: 600; font-size: 13px; }
+    .btn-filter { background: var(--accent-orange); color:white; }
+    .btn-refresh { background: var(--onex-blue); color:white; }
+
+    /* Data Table */
+    table { width:100%; border-collapse:collapse; background:white; border-radius:12px; overflow:hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    th { background:#f8fafc; padding:15px; text-align:left; color: #666; font-weight: 700; border-bottom: 2px solid var(--border-color); }
+    td { padding:15px; border-bottom:1px solid var(--border-color); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+
+    /* Sections */
+    .section { display:none; animation: fadeIn 0.3s ease; }
     .active-section { display:block; }
-    
-    /* Upload Box Styling */
-    .upload-box { border:2px dashed #ccc; border-radius:12px; padding:40px; text-align:center; cursor:pointer; transition:0.3s; background: white; }
-    .upload-box:hover { border-color:#D56269; background:#fff7f7; }
-    .upload-box.dragover { border-color:#D56269; background:#ffeaea; }
-    .upload-icon { font-size:40px; margin-bottom:10px; color:#D56269; }
-    .file-name { margin-top:15px; font-weight:600; color: #333; }
-    .btn-upload { margin-top:20px; padding:12px 24px; background:#D56269; color:white; border:none; border-radius:6px; cursor:pointer; width: 100%; font-size: 14px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Upload Box */
+    .upload-box { border:2px dashed #cbd5e1; border-radius:16px; padding:60px 40px; text-align:center; cursor:pointer; transition:0.3s; background: white; margin-bottom: 20px; }
+    .upload-box:hover, .upload-box.dragover { border-color: #D56269; background:#fffafa; }
+    .upload-icon { font-size:50px; margin-bottom:15px; display: block; }
+    .file-name { margin-top:20px; font-weight:700; color: var(--primary-red); font-size: 14px; }
+    .btn-upload { padding:14px; background:#D56269; color:white; border:none; border-radius:8px; cursor:pointer; width: 100%; font-size: 15px; font-weight: 700; }
+
+    /* Progress Bar */
+    #uploadProgressContainer { display:none; margin-top:20px; padding: 15px; background: white; border-radius: 10px; }
+    .progress-track { width:100%; height:10px; background:#f0f0f0; border-radius:10px; overflow:hidden; margin-top: 8px; }
+    .progress-fill { height:100%; width:0%; background: var(--primary-red); transition: width 0.3s ease; }
   </style>
 </head>
 <body>
 
-<div class="sidebar">
+<aside class="sidebar">
   <div class="logo">
-    <img src="https://warcssm.1xtel.co/media/media/2b47ba00-2481-4131-a600-0d2ebd01f0b5/OneXtel_Logo_P.jpg">
+    <img src="https://warcssm.1xtel.co/media/media/2b47ba00-2481-4131-a600-0d2ebd01f0b5/OneXtel_Logo_P.jpg" alt="OneXtel Logo">
   </div>
-  <div class="menu">
-    <div id="tab-upload" class="active" onclick="switchTab('upload', this)">Upload</div>
+  <nav class="menu">
+    <div id="tab-upload" class="active" onclick="switchTab('upload', this)">Upload Center</div>
     <div id="tab-store" onclick="switchTab('store', this)">Nearest Store</div>
-    <div id="tab-offer" onclick="switchTab('offer', this)">Offer</div>
+    <div id="tab-offer" onclick="switchTab('offer', this)">Offers</div>
     <div id="tab-loyalty" onclick="switchTab('loyalty', this)">Loyalty Points</div>
-  </div>
-</div>
+  </nav>
+</aside>
 
-<div class="main">
+<main class="main">
   <div class="header">
     <h3 id="title">Upload Center</h3>
     <button class="logout-btn">Logout</button>
   </div>
 
   <div class="filters" id="filtersBar">
-    <input type="text" id="mobile" placeholder="Search Mobile...">
-    <button class="btn btn-filter" onclick="applyFilter()">Filter</button>
-    <select id="limit" onchange="applyFilter()">
-      <option value="10">10 Rows</option>
-      <option value="20">20 Rows</option>
-      <option value="50">50 Rows</option>
+    <input type="text" id="mobile" placeholder="Search Mobile No.">
+    <button class="btn btn-filter" onclick="applyFilters()">Apply Filter</button>
+    <select id="limit" onchange="applyFilters()">
+      <option value="10">Show 10</option>
+      <option value="30">Show 30</option>
+      <option value="50">Show 50</option>
     </select>
-    <button class="btn btn-refresh" onclick="applyFilter()">Refresh</button>
+    <button class="btn btn-refresh" onclick="applyFilters()">Refresh</button>
   </div>
 
-  <div id="upload" class="section active-section">
+  <section id="upload" class="section active-section">
     <div class="upload-box" id="dropZone">
-      <div class="upload-icon">📄</div>
-      <div><b>Drag & Drop PDF here</b></div>
-      <small>or click to browse</small>
-      <input type="file" id="pdfFile" hidden>
+      <span class="upload-icon">📁</span>
+      <div><b style="font-size: 16px;">Drag & Drop PDF files here</b></div>
+      <p style="color: #666;">or click to browse your computer</p>
+      <input type="file" id="pdfFile" hidden accept=".pdf">
       <div id="fileName" class="file-name"></div>
     </div>
-    <button class="btn-upload" onclick="uploadPDF()">Start Upload</button>
-    <div id="uploadProgressContainer" style="display:none; margin-top:15px;">
-      <div style="margin-bottom:5px;">Uploading... <span id="progressText">0%</span></div>
-      <div style="width:100%; height:8px; background:#eee; border-radius:4px; overflow:hidden;">
-        <div id="progressBar" style="height:100%; width:0%; background:#D56269; transition:0.3s;"></div>
+    <button class="btn-upload" onclick="uploadPDF()">Upload to Server</button>
+
+    <div id="uploadProgressContainer">
+      <div style="display:flex; justify-content:space-between; font-weight: 600;">
+        <span>Uploading...</span>
+        <span id="progressText">0%</span>
+      </div>
+      <div class="progress-track">
+        <div id="progressBar" class="progress-fill"></div>
       </div>
     </div>
-    <p id="result" style="margin-top:15px;"></p>
-  </div>
+    <p id="result" style="text-align: center; font-weight: 600;"></p>
+  </section>
 
-  <div id="dataSection" class="section">
+  <section id="dataSection" class="section">
     <div id="tableContainer">
       </div>
-  </div>
-</div>
+  </section>
+</main>
 
 <script src="/js/upload.js"></script>
 
 <script>
-let currentModule = '';
+  let currentActiveTab = 'upload';
 
-function switchTab(tab, el) {
-  // Update Menu UI
-  document.querySelectorAll(".menu div").forEach(e => e.classList.remove("active"));
-  el.classList.add("active");
+  function switchTab(tab, element) {
+    currentActiveTab = tab;
 
-  // Toggle Sections
-  document.querySelectorAll(".section").forEach(e => e.classList.remove("active-section"));
-  const filters = document.getElementById("filtersBar");
+    // 1. Update UI - Menu Tabs
+    document.querySelectorAll(".menu div").forEach(div => div.classList.remove("active"));
+    element.classList.add("active");
 
-  if (tab === 'upload') {
-    document.getElementById("upload").classList.add("active-section");
-    document.getElementById("title").innerText = "Upload Center";
-    filters.style.display = "none";
-  } else {
-    document.getElementById("dataSection").classList.add("active-section");
-    filters.style.display = "flex";
-    
-    // Set Module for API calls
-    currentModule = tab; 
+    // 2. Update UI - Sections
+    document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active-section"));
+    const filters = document.getElementById("filtersBar");
 
-    document.getElementById("title").innerText =
-      tab === "store" ? "Nearest Store Visits" :
-      tab === "offer" ? "Offer Claims" :
-      "Loyalty Points Activity";
+    if (tab === 'upload') {
+      document.getElementById("upload").classList.add("active-section");
+      document.getElementById("title").innerText = "Upload Center";
+      filters.style.display = "none";
+    } else {
+      document.getElementById("dataSection").classList.add("active-section");
+      filters.style.display = "flex";
+      
+      // Update Title based on Tab
+      const titles = {
+        'store': 'Nearest Store Visits',
+        'offer': 'Retail Offer Claims',
+        'loyalty': 'Loyalty Rewards Data'
+      };
+      document.getElementById("title").innerText = titles[tab] || "Data View";
 
-    // Trigger the data load for the specific tab
-    loadData(tab); 
+      // 3. Trigger Data Loading (Function from upload.js)
+      if (typeof loadData === "function") {
+        loadData(tab);
+      }
+    }
   }
-}
 
-// Wrapper for filtering
-function applyFilter() {
-  if (currentModule) {
-    loadData(currentModule);
+  function applyFilters() {
+    if (typeof loadData === "function") {
+      loadData(currentActiveTab);
+    }
   }
-}
 
-// Drag & Drop Functionality
-const dropZone = document.getElementById("dropZone");
-const fileInput = document.getElementById("pdfFile");
+  // --- Drag and Drop Logic ---
+  const dropZone = document.getElementById("dropZone");
+  const fileInput = document.getElementById("pdfFile");
+  const fileNameDisplay = document.getElementById("fileName");
 
-dropZone.onclick = () => fileInput.click();
+  dropZone.onclick = () => fileInput.click();
 
-fileInput.onchange = () => {
-  if (fileInput.files.length > 0) {
-    document.getElementById("fileName").innerText = "Selected: " + fileInput.files[0].name;
-  }
-};
+  fileInput.onchange = () => {
+    if (fileInput.files.length > 0) {
+      fileNameDisplay.innerText = "📄 Selected: " + fileInput.files[0].name;
+    }
+  };
 
-dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add("dragover"); };
-dropZone.ondragleave = () => dropZone.classList.remove("dragover");
-dropZone.ondrop = e => {
-  e.preventDefault();
-  dropZone.classList.remove("dragover");
-  fileInput.files = e.dataTransfer.files;
-  if (fileInput.files.length > 0) {
-    document.getElementById("fileName").innerText = "Dropped: " + fileInput.files[0].name;
-  }
-};
+  dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add("dragover"); };
+  dropZone.ondragleave = () => dropZone.classList.remove("dragover");
+  dropZone.ondrop = (e) => {
+    e.preventDefault();
+    dropZone.classList.remove("dragover");
+    fileInput.files = e.dataTransfer.files;
+    if (fileInput.files.length > 0) {
+      fileNameDisplay.innerText = "📥 Dropped: " + fileInput.files[0].name;
+    }
+  };
+
+  // --- Logout Logic ---
+  document.querySelectorAll(".logout-btn").forEach(btn => {
+    btn.onclick = () => {
+      if (confirm("Are you sure you want to logout?")) {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = "/login.html"; // Redirect to login
+      }
+    };
+  });
 </script>
 
 </body>
