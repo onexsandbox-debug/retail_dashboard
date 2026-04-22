@@ -168,10 +168,10 @@ if (!localStorage.getItem("user")) {
   </div>
 
   <div class="menu">
-    <div class="active" onclick="switchTab('upload')">Upload</div>
-    <div onclick="switchTab('store')">Nearest Store</div>
-    <div onclick="switchTab('offer')">Offer</div>
-    <div onclick="switchTab('loyalty')">Loyalty Points</div>
+    <div class="active" onclick="switchTab('upload', this)">Upload</div>
+    <div onclick="switchTab('store', this)">Nearest Store</div>
+    <div onclick="switchTab('offer', this)">Offer</div>
+    <div onclick="switchTab('loyalty', this)">Loyalty Points</div>
   </div>
 </div>
 
@@ -191,9 +191,8 @@ if (!localStorage.getItem("user")) {
 
   <div class="card">
 
-    <!-- UPLOAD SECTION -->
+    <!-- UPLOAD -->
     <div id="uploadSection">
-
       <h3>Upload PDF</h3>
 
       <div class="upload-box" id="dropZone">
@@ -207,27 +206,24 @@ if (!localStorage.getItem("user")) {
       <button class="btn-upload" onclick="uploadPDF()">Upload</button>
 
       <div id="uploadProgressContainer" style="display:none; margin-top:15px;">
-        <div style="font-size:12px; margin-bottom:5px;">
+        <div style="font-size:12px;">
           Uploading... <span id="progressText">0%</span>
         </div>
-
         <div style="width:100%; height:8px; background:#eee;">
           <div id="progressBar" style="height:100%; width:0%; background:#D56269;"></div>
         </div>
       </div>
 
       <p id="result"></p>
-
     </div>
 
-    <!-- DYNAMIC DATA -->
+    <!-- DATA -->
     <div id="dynamicContent" style="display:none;"></div>
 
   </div>
-
 </div>
 
-<!-- ERROR MODAL -->
+<!-- ERROR -->
 <div id="errorModal">
   <div class="modal-box">
     <p id="errorText"></p>
@@ -239,78 +235,120 @@ if (!localStorage.getItem("user")) {
 
 <script>
 
+// =============================
+// 🔥 DATA LOAD FIX
+// =============================
+async function loadData(type) {
+
+  const dynamic = document.getElementById("dynamicContent");
+
+  let api = {
+    store: "getStoreVisit",
+    offer: "getOfferVisit",
+    loyalty: "getLoyaltyVisit"
+  }[type];
+
+  try {
+    const res = await fetch(`/api/${api}?page=1&limit=10`);
+    const json = await res.json();
+
+    if (!json.success) {
+      dynamic.innerHTML = "No data found";
+      return;
+    }
+
+    let html = `<table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th>S.No</th>
+          <th>Mobile</th>
+          <th>WABA</th>
+          <th>Date</th>
+          <th>Time</th>
+        </tr>
+      </thead><tbody>`;
+
+    json.data.forEach((row, i) => {
+      const d = new Date(row.created_at);
+
+      html += `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${row.mobile_number}</td>
+          <td>${row.waba_number}</td>
+          <td>${d.toLocaleDateString("en-GB",{timeZone:"Asia/Kolkata"})}</td>
+          <td>${d.toLocaleTimeString("en-GB",{timeZone:"Asia/Kolkata"})}</td>
+        </tr>`;
+    });
+
+    html += "</tbody></table>";
+    dynamic.innerHTML = html;
+
+  } catch {
+    dynamic.innerHTML = "Error loading data";
+  }
+}
+
+// =============================
+function switchTab(tab, el) {
+
+  document.querySelectorAll(".menu div").forEach(e => e.classList.remove("active"));
+  el.classList.add("active");
+
+  const upload = document.getElementById("uploadSection");
+  const dynamic = document.getElementById("dynamicContent");
+
+  if (tab === "upload") {
+    upload.style.display = "block";
+    dynamic.style.display = "none";
+    return;
+  }
+
+  upload.style.display = "none";
+  dynamic.style.display = "block";
+  dynamic.innerHTML = "Loading...";
+
+  loadData(tab);
+}
+
+// =============================
+function refreshData() {
+  const active = document.querySelector(".menu .active").innerText.toLowerCase();
+
+  if (active.includes("store")) loadData("store");
+  if (active.includes("offer")) loadData("offer");
+  if (active.includes("loyalty")) loadData("loyalty");
+}
+
+// =============================
 function logout() {
   localStorage.removeItem("user");
   window.location.href = "/login.html";
 }
 
-function showError(msg) {
-  document.getElementById("errorText").innerText = msg;
-  document.getElementById("errorModal").style.display = "flex";
-}
-
-function closeError() {
-  document.getElementById("errorModal").style.display = "none";
-}
-
-
-// =============================
-// TAB SWITCH LOGIC
-// =============================
-function switchTab(tab) {
-
-  document.querySelectorAll(".menu div").forEach(el => el.classList.remove("active"));
-  event.target.classList.add("active");
-
-  const uploadSection = document.getElementById("uploadSection");
-  const dynamic = document.getElementById("dynamicContent");
-
-  if (tab === "upload") {
-    document.getElementById("sectionTitle").innerText = "Upload Center";
-    uploadSection.style.display = "block";
-    dynamic.style.display = "none";
-    return;
-  }
-
-  uploadSection.style.display = "none";
-  dynamic.style.display = "block";
-  dynamic.innerHTML = "Loading...";
-
-  if (tab === "store") loadData("store");
-  if (tab === "offer") loadData("offer");
-  if (tab === "loyalty") loadData("loyalty");
-}
-
-
-// =============================
-// DRAG DROP
 // =============================
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("pdfFile");
 
-dropZone.addEventListener("click", () => fileInput.click());
+dropZone.onclick = () => fileInput.click();
 
-fileInput.addEventListener("change", () => {
+fileInput.onchange = () => {
   document.getElementById("fileName").innerText = fileInput.files[0].name;
-});
+};
 
-dropZone.addEventListener("dragover", (e) => {
+dropZone.ondragover = e => {
   e.preventDefault();
   dropZone.classList.add("dragover");
-});
+};
 
-dropZone.addEventListener("dragleave", () => {
-  dropZone.classList.remove("dragover");
-});
+dropZone.ondragleave = () => dropZone.classList.remove("dragover");
 
-dropZone.addEventListener("drop", (e) => {
+dropZone.ondrop = e => {
   e.preventDefault();
   dropZone.classList.remove("dragover");
-
   fileInput.files = e.dataTransfer.files;
-  document.getElementById("fileName").innerText =
-    e.dataTransfer.files[0].name;
-});
+  document.getElementById("fileName").innerText = e.dataTransfer.files[0].name;
+};
 
 </script>
 
