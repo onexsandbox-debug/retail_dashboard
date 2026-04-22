@@ -2,166 +2,71 @@
 <html>
 <head>
   <title>Retail Dashboard</title>
-
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&display=swap" rel="stylesheet">
-
   <style>
     body { margin:0; font-family:'Manrope', sans-serif; background:#f4f6f9; display:flex; font-size:13px; }
-
-    .sidebar { width:240px; background:white; height:100vh; border-right:1px solid #eee; }
+    .sidebar { width:240px; background:white; height:100vh; border-right:1px solid #eee; position: fixed; }
     .logo { padding:15px 20px; }
     .logo img { max-width:140px; }
-
     .menu { padding:10px; }
-    .menu div { padding:12px; margin-bottom:5px; cursor:pointer; border-radius:6px; }
+    .menu div { padding:12px; margin-bottom:5px; cursor:pointer; border-radius:6px; transition: 0.2s; }
     .menu div:hover { background:#f5f5f5; }
-
     .active { background:#ffe6e6; color:#e60023; font-weight:600; }
-
-    .main { flex:1; padding:20px; }
-
-    .header { display:flex; justify-content:space-between; margin-bottom:20px; }
-
-    .logout-btn {
-      background:#c62828;
-      color:white;
-      border:none;
-      padding:8px 12px;
-      border-radius:6px;
-      cursor:pointer;
-    }
-
-    .filters {
-      display:flex;
-      gap:10px;
-      margin-bottom:15px;
-      background:white;
-      padding:15px;
-      border-radius:10px;
-      flex-wrap:wrap;
-    }
-
-    .filters input, .filters select {
-      padding:8px;
-      border-radius:6px;
-      border:1px solid #ccc;
-    }
-
-    .btn { padding:8px 12px; border-radius:6px; border:none; cursor:pointer; }
+    .main { flex:1; padding:20px; margin-left: 240px; }
+    .header { display:flex; justify-content:space-between; margin-bottom:20px; align-items: center; }
+    .logout-btn { background:#c62828; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
+    .filters { display:none; gap:10px; margin-bottom:15px; background:white; padding:15px; border-radius:10px; flex-wrap:wrap; align-items: center; }
+    .filters input, .filters select { padding:8px; border-radius:6px; border:1px solid #ccc; }
+    .btn { padding:8px 12px; border-radius:6px; border:none; cursor:pointer; font-weight: 600; }
     .btn-filter { background:#ff7a00; color:white; }
     .btn-refresh { background:#1f4e8c; color:white; }
-
-    table {
-      width:100%;
-      border-collapse:collapse;
-      background:white;
-      border-radius:10px;
-      overflow:hidden;
-    }
-
-    th { background:#f5f7fb; padding:12px; text-align:left; }
+    table { width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    th { background:#f5f7fb; padding:12px; text-align:left; color: #555; }
     td { padding:12px; border-bottom:1px solid #eee; }
-
     .section { display:none; }
     .active-section { display:block; }
-
-    .pagination {
-      margin-top:15px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-    }
-
-    /* ✅ Upload FIX */
-    .upload-box {
-      border:2px dashed #ccc;
-      border-radius:12px;
-      padding:30px;
-      text-align:center;
-      cursor:pointer;
-      transition:0.3s;
-    }
-
-    .upload-box:hover {
-      border-color:#D56269;
-      background:#fff7f7;
-    }
-
-    .upload-box.dragover {
-      border-color:#D56269;
-      background:#ffeaea;
-    }
-
-    .upload-icon {
-      font-size:30px;
-      margin-bottom:10px;
-      color:#D56269;
-    }
-
-    .file-name {
-      margin-top:10px;
-      font-weight:600;
-    }
-
-    .btn-upload {
-      margin-top:15px;
-      padding:10px 16px;
-      background:#D56269;
-      color:white;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-    }
-
-    #uploadProgressContainer {
-      display:none;
-      margin-top:15px;
-    }
-
+    
+    /* Upload Box Styling */
+    .upload-box { border:2px dashed #ccc; border-radius:12px; padding:40px; text-align:center; cursor:pointer; transition:0.3s; background: white; }
+    .upload-box:hover { border-color:#D56269; background:#fff7f7; }
+    .upload-box.dragover { border-color:#D56269; background:#ffeaea; }
+    .upload-icon { font-size:40px; margin-bottom:10px; color:#D56269; }
+    .file-name { margin-top:15px; font-weight:600; color: #333; }
+    .btn-upload { margin-top:20px; padding:12px 24px; background:#D56269; color:white; border:none; border-radius:6px; cursor:pointer; width: 100%; font-size: 14px; }
   </style>
 </head>
-
 <body>
 
 <div class="sidebar">
   <div class="logo">
     <img src="https://warcssm.1xtel.co/media/media/2b47ba00-2481-4131-a600-0d2ebd01f0b5/OneXtel_Logo_P.jpg">
   </div>
-
   <div class="menu">
-    <div class="active" onclick="switchTab('upload', this)">Upload</div>
-    <div onclick="switchTab('store', this)">Nearest Store</div>
-    <div onclick="switchTab('offer', this)">Offer</div>
-    <div onclick="switchTab('loyalty', this)">Loyalty Points</div>
+    <div id="tab-upload" class="active" onclick="switchTab('upload', this)">Upload</div>
+    <div id="tab-store" onclick="switchTab('store', this)">Nearest Store</div>
+    <div id="tab-offer" onclick="switchTab('offer', this)">Offer</div>
+    <div id="tab-loyalty" onclick="switchTab('loyalty', this)">Loyalty Points</div>
   </div>
 </div>
 
 <div class="main">
-
   <div class="header">
     <h3 id="title">Upload Center</h3>
     <button class="logout-btn">Logout</button>
   </div>
 
-  <!-- FILTERS -->
   <div class="filters" id="filtersBar">
-    <input type="text" id="mobile" placeholder="Mobile">
-    <button class="btn btn-filter" onclick="loadData()">Filter</button>
-
-    <select id="limit" onchange="changeLimit()">
-      <option>10</option>
-      <option>20</option>
-      <option>30</option>
-      <option>50</option>
-      <option>100</option>
+    <input type="text" id="mobile" placeholder="Search Mobile...">
+    <button class="btn btn-filter" onclick="applyFilter()">Filter</button>
+    <select id="limit" onchange="applyFilter()">
+      <option value="10">10 Rows</option>
+      <option value="20">20 Rows</option>
+      <option value="50">50 Rows</option>
     </select>
-
-    <button class="btn btn-refresh" onclick="loadData()">Refresh</button>
+    <button class="btn btn-refresh" onclick="applyFilter()">Refresh</button>
   </div>
 
-  <!-- UPLOAD -->
   <div id="upload" class="section active-section">
-
     <div class="upload-box" id="dropZone">
       <div class="upload-icon">📄</div>
       <div><b>Drag & Drop PDF here</b></div>
@@ -169,38 +74,34 @@
       <input type="file" id="pdfFile" hidden>
       <div id="fileName" class="file-name"></div>
     </div>
-
-    <button class="btn-upload" onclick="uploadPDF()">Upload</button>
-
-    <div id="uploadProgressContainer">
-      <div>Uploading... <span id="progressText">0%</span></div>
-      <div style="width:100%; height:8px; background:#eee;">
-        <div id="progressBar" style="height:100%; width:0%; background:#D56269;"></div>
+    <button class="btn-upload" onclick="uploadPDF()">Start Upload</button>
+    <div id="uploadProgressContainer" style="display:none; margin-top:15px;">
+      <div style="margin-bottom:5px;">Uploading... <span id="progressText">0%</span></div>
+      <div style="width:100%; height:8px; background:#eee; border-radius:4px; overflow:hidden;">
+        <div id="progressBar" style="height:100%; width:0%; background:#D56269; transition:0.3s;"></div>
       </div>
     </div>
-
-    <p id="result"></p>
-
+    <p id="result" style="margin-top:15px;"></p>
   </div>
 
-  <!-- DATA -->
   <div id="dataSection" class="section">
-    <div id="tableContainer"></div>
+    <div id="tableContainer">
+      </div>
   </div>
-
 </div>
 
 <script src="/js/upload.js"></script>
 
 <script>
+let currentModule = '';
 
 function switchTab(tab, el) {
-
+  // Update Menu UI
   document.querySelectorAll(".menu div").forEach(e => e.classList.remove("active"));
   el.classList.add("active");
 
+  // Toggle Sections
   document.querySelectorAll(".section").forEach(e => e.classList.remove("active-section"));
-
   const filters = document.getElementById("filtersBar");
 
   if (tab === 'upload') {
@@ -210,24 +111,37 @@ function switchTab(tab, el) {
   } else {
     document.getElementById("dataSection").classList.add("active-section");
     filters.style.display = "flex";
+    
+    // Set Module for API calls
+    currentModule = tab; 
 
     document.getElementById("title").innerText =
-      tab === "store" ? "Nearest Store" :
-      tab === "offer" ? "Offer" :
-      "Loyalty Points";
+      tab === "store" ? "Nearest Store Visits" :
+      tab === "offer" ? "Offer Claims" :
+      "Loyalty Points Activity";
 
-    loadData(tab);
+    // Trigger the data load for the specific tab
+    loadData(tab); 
   }
 }
 
-// Drag & drop (unchanged)
+// Wrapper for filtering
+function applyFilter() {
+  if (currentModule) {
+    loadData(currentModule);
+  }
+}
+
+// Drag & Drop Functionality
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("pdfFile");
 
 dropZone.onclick = () => fileInput.click();
 
 fileInput.onchange = () => {
-  document.getElementById("fileName").innerText = fileInput.files[0].name;
+  if (fileInput.files.length > 0) {
+    document.getElementById("fileName").innerText = "Selected: " + fileInput.files[0].name;
+  }
 };
 
 dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add("dragover"); };
@@ -236,9 +150,10 @@ dropZone.ondrop = e => {
   e.preventDefault();
   dropZone.classList.remove("dragover");
   fileInput.files = e.dataTransfer.files;
-  document.getElementById("fileName").innerText = e.dataTransfer.files[0].name;
+  if (fileInput.files.length > 0) {
+    document.getElementById("fileName").innerText = "Dropped: " + fileInput.files[0].name;
+  }
 };
-
 </script>
 
 </body>
