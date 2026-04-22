@@ -21,18 +21,10 @@
       border-right: 1px solid #eee;
     }
 
-    .logo {
-      padding: 15px 20px;
-    }
+    .logo { padding: 15px 20px; }
+    .logo img { max-width: 140px; }
 
-    .logo img {
-      max-width: 140px;
-    }
-
-    .menu {
-      padding: 10px;
-    }
-
+    .menu { padding: 10px; }
     .menu div {
       padding: 12px;
       margin-bottom: 5px;
@@ -40,9 +32,7 @@
       border-radius: 6px;
     }
 
-    .menu div:hover {
-      background: #f5f5f5;
-    }
+    .menu div:hover { background: #f5f5f5; }
 
     .active {
       background: #ffe6e6;
@@ -50,10 +40,7 @@
       font-weight: 600;
     }
 
-    .main {
-      flex: 1;
-      padding: 20px;
-    }
+    .main { flex: 1; padding: 20px; }
 
     .header {
       display: flex;
@@ -115,19 +102,44 @@
       border-bottom: 1px solid #eee;
     }
 
-    .section {
-      display: none;
-    }
-
-    .active-section {
-      display: block;
-    }
+    .section { display: none; }
+    .active-section { display: block; }
 
     .pagination {
       margin-top: 15px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+
+    /* ✅ Upload Styling (Restored) */
+    .upload-box {
+      border: 2px dashed #ccc;
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .upload-box:hover {
+      border-color: #D56269;
+      background: #fff7f7;
+    }
+
+    .upload-box.dragover {
+      border-color: #D56269;
+      background: #ffeaea;
+    }
+
+    .upload-icon {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .file-name {
+      margin-top: 10px;
+      font-weight: 600;
     }
 
   </style>
@@ -155,8 +167,8 @@
     <button class="logout-btn">Logout</button>
   </div>
 
-  <!-- FILTER -->
-  <div class="filters">
+  <!-- FILTERS -->
+  <div class="filters" id="filtersBar">
     <input type="text" id="mobile" placeholder="Mobile">
     <button class="btn btn-filter" onclick="loadData()">Filter</button>
 
@@ -173,8 +185,26 @@
 
   <!-- UPLOAD -->
   <div id="upload" class="section active-section">
-    <input type="file" id="pdfFile">
-    <button onclick="uploadPDF()">Upload</button>
+
+    <div class="upload-box" id="dropZone">
+      <div class="upload-icon">📄</div>
+      <div>Drag & Drop PDF here</div>
+      <small>or click to browse</small>
+      <input type="file" id="pdfFile" hidden>
+      <div id="fileName" class="file-name"></div>
+    </div>
+
+    <button class="btn btn-filter" onclick="uploadPDF()">Upload</button>
+
+    <div id="uploadProgressContainer" style="display:none;margin-top:15px;">
+      <div>Uploading... <span id="progressText">0%</span></div>
+      <div style="width:100%;height:8px;background:#eee;">
+        <div id="progressBar" style="height:100%;width:0%;background:#D56269;"></div>
+      </div>
+    </div>
+
+    <p id="result"></p>
+
   </div>
 
   <!-- DATA -->
@@ -201,11 +231,19 @@ function switchTab(tab, el) {
 
   document.querySelectorAll(".section").forEach(e => e.classList.remove("active-section"));
 
+  const filters = document.getElementById("filtersBar");
+
   if (tab === 'upload') {
+
     document.getElementById("upload").classList.add("active-section");
     document.getElementById("title").innerText = "Upload Center";
+
+    filters.style.display = "none"; // ✅ hide filter only here
+
   } else {
+
     document.getElementById("dataSection").classList.add("active-section");
+    filters.style.display = "flex";
 
     document.getElementById("title").innerText =
       tab === "store" ? "Nearest Store" :
@@ -289,17 +327,36 @@ function changeLimit() {
   loadData();
 }
 
-function next() {
-  page++;
-  loadData();
-}
+function next() { page++; loadData(); }
+function prev() { if (page > 1) { page--; loadData(); } }
 
-function prev() {
-  if (page > 1) {
-    page--;
-    loadData();
-  }
-}
+// ======================
+// DRAG DROP (RESTORED)
+// ======================
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("pdfFile");
+
+dropZone.onclick = () => fileInput.click();
+
+fileInput.onchange = () => {
+  document.getElementById("fileName").innerText = fileInput.files[0].name;
+};
+
+dropZone.ondragover = e => {
+  e.preventDefault();
+  dropZone.classList.add("dragover");
+};
+
+dropZone.ondragleave = () => {
+  dropZone.classList.remove("dragover");
+};
+
+dropZone.ondrop = e => {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+  fileInput.files = e.dataTransfer.files;
+  document.getElementById("fileName").innerText = e.dataTransfer.files[0].name;
+};
 
 </script>
 
