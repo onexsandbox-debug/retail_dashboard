@@ -1,153 +1,241 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Retail Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* CSS stays the same as your previous version */
-        body { margin: 0; font-family: 'Manrope', sans-serif; background: #f4f6f9; display: flex; font-size: 13px; }
-        .sidebar { width: 240px; background: white; height: 100vh; border-right: 1px solid #eee; position: fixed; }
-        .logo { padding: 15px 20px; }
-        .logo img { max-width: 140px; }
-        .menu { padding: 10px; }
-        .menu div { padding: 12px; margin-bottom: 5px; cursor: pointer; border-radius: 6px; }
-        .menu div:hover { background: #f5f5f5; }
-        .active { background: #ffe6e6; color: #e60023; font-weight: 600; }
-        .main { flex: 1; padding: 20px; margin-left: 240px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .logout-btn { background: #c62828; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
-        .filters { display: flex; gap: 10px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 10px; }
-        .btn-refresh { background: #1f4e8c; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
-        .card { background: white; padding: 20px; border-radius: 10px; min-height: 400px; }
-        .upload-box { border: 2px dashed #ccc; border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: 0.3s; }
-        .upload-box:hover { border-color: #D56269; background: #fff7f7; }
-        .upload-icon { font-size: 30px; margin-bottom: 10px; }
-        .file-name { margin-top: 10px; font-weight: 600; color: #333; }
-        .btn-upload { margin-top: 15px; padding: 10px 14px; background: #D56269; color: white; border: none; border-radius: 6px; cursor: pointer; }
-        #errorModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-box { background: white; padding: 20px; border-radius: 10px; text-align: center; }
-    </style>
+  <title>Retail Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { margin:0; font-family:'Manrope'; background:#f4f6f9; display:flex; font-size:13px; }
+
+    .sidebar { width:240px; background:white; height:100vh; border-right:1px solid #eee; }
+    .logo { padding:15px 20px; }
+    .logo img { max-width:140px; }
+
+    .menu { padding:10px; }
+    .menu div { padding:12px; margin-bottom:5px; cursor:pointer; border-radius:6px; }
+    .menu div:hover { background:#f5f5f5; }
+    .active { background:#ffe6e6; color:#e60023; font-weight:600; }
+
+    .main { flex:1; padding:20px; }
+
+    .header { display:flex; justify-content:space-between; margin-bottom:20px; }
+
+    .logout-btn { background:#c62828; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
+
+    .filters {
+      display:flex; gap:10px; margin-bottom:15px;
+      background:white; padding:15px; border-radius:10px; flex-wrap:wrap;
+    }
+
+    .filters input, .filters select {
+      padding:8px; border-radius:6px; border:1px solid #ccc;
+    }
+
+    .btn { padding:8px 12px; border-radius:6px; border:none; cursor:pointer; }
+    .btn-filter { background:#ff7a00; color:white; }
+    .btn-refresh { background:#1f4e8c; color:white; }
+    .btn-download { background:#2e7d32; color:white; }
+
+    table { width:100%; border-collapse:collapse; background:white; border-radius:10px; }
+    th { background:#f5f7fb; padding:12px; text-align:left; }
+    td { padding:12px; border-bottom:1px solid #eee; }
+
+    .section { display:none; }
+    .active-section { display:block; }
+
+    /* Upload */
+    .upload-box {
+      border:2px dashed #ccc;
+      border-radius:12px;
+      padding:30px;
+      text-align:center;
+      cursor:pointer;
+    }
+
+    .upload-box:hover { border-color:#D56269; background:#fff7f7; }
+    .upload-box.dragover { border-color:#D56269; background:#ffeaea; }
+
+    .upload-icon { font-size:30px; color:#D56269; }
+    .btn-upload { margin-top:15px; padding:10px; background:#D56269; color:white; border:none; border-radius:6px; }
+
+    #uploadProgressContainer { display:none; margin-top:10px; }
+  </style>
 </head>
+
 <body>
 
-<script>
-    if (!localStorage.getItem("user")) {
-        window.location.href = "/login.html";
-    }
-</script>
-
 <div class="sidebar">
-    <div class="logo">
-        <img src="https://warcssm.1xtel.co/media/media/2b47ba00-2481-4131-a600-0d2ebd01f0b5/OneXtel_Logo_P.jpg">
-    </div>
-    <div class="menu" id="sideMenu">
-        <div class="active" onclick="switchTab('upload', this)">Upload</div>
-        <div onclick="switchTab('store', this)">Nearest Store</div>
-        <div onclick="switchTab('offer', this)">Offer</div>
-        <div onclick="switchTab('loyalty', this)">Loyalty Points</div>
-    </div>
+  <div class="logo">
+    <img src="https://warcssm.1xtel.co/media/media/2b47ba00-2481-4131-a600-0d2ebd01f0b5/OneXtel_Logo_P.jpg">
+  </div>
+
+  <div class="menu">
+    <div class="active" onclick="switchTab('upload', this)">Upload</div>
+    <div onclick="switchTab('store', this)">Nearest Store</div>
+    <div onclick="switchTab('offer', this)">Offer</div>
+    <div onclick="switchTab('loyalty', this)">Loyalty Points</div>
+  </div>
 </div>
 
 <div class="main">
-    <div class="header">
-        <h3 id="sectionTitle">Upload Center</h3>
-        <button class="logout-btn" onclick="logout()">Logout</button>
+
+  <div class="header">
+    <h3 id="title">Upload Center</h3>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <!-- FILTER -->
+  <div class="filters" id="filtersBar">
+    <input type="text" id="mobile" placeholder="Mobile">
+    <button class="btn btn-filter" onclick="loadData()">Filter</button>
+
+    <select id="limit" onchange="changeLimit()">
+      <option>10</option><option>20</option><option>30</option>
+      <option>50</option><option>100</option>
+    </select>
+
+    <button class="btn btn-refresh" onclick="loadData()">Refresh</button>
+    <button class="btn btn-download" onclick="downloadCSV()">Download</button>
+  </div>
+
+  <!-- UPLOAD -->
+  <div id="upload" class="section active-section">
+    <div class="upload-box" id="dropZone">
+      <div class="upload-icon">📄</div>
+      <div><b>Drag & Drop PDF</b></div>
+      <input type="file" id="pdfFile" hidden>
+      <div id="fileName"></div>
     </div>
 
-    <div class="filters" id="filterBar" style="display: none;">
-        <input type="text" id="searchInput" placeholder="Search Mobile...">
-        <button class="btn-refresh" onclick="refreshData()">Refresh</button>
-    </div>
+    <button class="btn-upload" onclick="uploadPDF()">Upload</button>
 
-    <div class="card">
-        <div id="uploadSection">
-            <h3>Upload PDF</h3>
-            <div class="upload-box" id="dropZone">
-                <div class="upload-icon">📄</div>
-                <div>Drag & Drop PDF here</div>
-                <small>or click to browse</small>
-                <input type="file" id="pdfFile" hidden>
-                <div id="fileName" class="file-name"></div>
-            </div>
-            <button class="btn-upload" onclick="uploadPDF()">Upload</button>
-            <div id="uploadProgressContainer" style="display:none; margin-top:15px;">
-                <div style="font-size:12px; margin-bottom:5px;">Uploading... <span id="progressText">0%</span></div>
-                <div style="width:100%; height:8px; background:#eee;"><div id="progressBar" style="height:100%; width:0%; background:#D56269;"></div></div>
-            </div>
-            <p id="result"></p>
-        </div>
-
-        <div id="dynamicContent" style="display:none;"></div>
+    <div id="uploadProgressContainer">
+      Uploading <span id="progressText">0%</span>
+      <div style="background:#eee;height:8px;">
+        <div id="progressBar" style="height:8px;width:0%;background:#D56269;"></div>
+      </div>
     </div>
+  </div>
+
+  <!-- DATA -->
+  <div id="dataSection" class="section">
+    <div id="tableContainer"></div>
+  </div>
+
 </div>
-
-<div id="errorModal"><div class="modal-box"><p id="errorText"></p><button onclick="closeError()" class="btn-upload">OK</button></div></div>
 
 <script src="/js/upload.js"></script>
 
 <script>
-let currentTab = 'upload';
 
-function logout() {
-    localStorage.removeItem("user");
-    window.location.href = "/login.html";
+let currentTab='upload', page=1, limit=10, lastData=[];
+
+function logout(){
+  localStorage.clear();
+  window.location.href="/login.html";
 }
 
-// Fixed switchTab to handle the UI and Data Fetching separately
-function switchTab(tab, element) {
-    // 1. Manage Active Class
-    document.querySelectorAll(".menu div").forEach(el => el.classList.remove("active"));
-    element.classList.add("active");
+function switchTab(tab, el){
+  document.querySelectorAll(".menu div").forEach(e=>e.classList.remove("active"));
+  el.classList.add("active");
 
-    const uploadSection = document.getElementById("uploadSection");
-    const dynamic = document.getElementById("dynamicContent");
-    const filterBar = document.getElementById("filterBar");
-    const sectionTitle = document.getElementById("sectionTitle");
+  document.querySelectorAll(".section").forEach(e=>e.classList.remove("active-section"));
 
-    currentTab = tab;
+  const filters=document.getElementById("filtersBar");
 
-    if (tab === "upload") {
-        sectionTitle.innerText = "Upload Center";
-        uploadSection.style.display = "block";
-        dynamic.style.display = "none";
-        filterBar.style.display = "none";
-        return;
-    }
+  currentTab=tab; page=1;
 
-    // Show Filters and Data Section
-    uploadSection.style.display = "none";
-    dynamic.style.display = "block";
-    filterBar.style.display = "flex";
-    dynamic.innerHTML = "<h4>Loading data from database...</h4>";
-
-    // Set Title
-    sectionTitle.innerText = tab.charAt(0).toUpperCase() + tab.slice(1) + " Records";
-
-    // 2. Call the function in your upload.js
-    if (typeof loadData === "function") {
-        loadData(tab); 
-    } else {
-        dynamic.innerHTML = "<p style='color:red;'>Error: loadData function not found in upload.js</p>";
-    }
+  if(tab==="upload"){
+    document.getElementById("upload").classList.add("active-section");
+    filters.style.display="none";
+    document.getElementById("title").innerText="Upload Center";
+  } else {
+    document.getElementById("dataSection").classList.add("active-section");
+    filters.style.display="flex";
+    document.getElementById("title").innerText=tab==="store"?"Nearest Store":tab==="offer"?"Offer":"Loyalty Points";
+    loadData();
+  }
 }
 
-function refreshData() {
-    if (currentTab !== 'upload') loadData(currentTab);
+async function loadData(){
+  let mobile=document.getElementById("mobile").value;
+
+  let api={
+    store:"getStoreVisit",
+    offer:"getOfferVisit",
+    loyalty:"getLoyaltyVisit"
+  }[currentTab];
+
+  const res=await fetch(`/api/${api}?page=${page}&limit=${limit}&mobile=${mobile}`);
+  const json=await res.json();
+
+  lastData=json.data||[];
+  renderTable(lastData);
 }
 
-// Drag & Drop logic remains the same
-const dropZone = document.getElementById("dropZone");
-const fileInput = document.getElementById("pdfFile");
-dropZone.addEventListener("click", () => fileInput.click());
-fileInput.addEventListener("change", () => { if(fileInput.files[0]) document.getElementById("fileName").innerText = fileInput.files[0].name; });
-dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
-dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
-dropZone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    dropZone.classList.remove("dragover");
-    fileInput.files = e.dataTransfer.files;
-    document.getElementById("fileName").innerText = e.dataTransfer.files[0].name;
-});
+function renderTable(data){
+  let html=`<table><thead>
+    <tr><th>S.No</th><th>Mobile</th><th>WABA</th><th>Date</th><th>Time</th></tr>
+  </thead><tbody>`;
+
+  data.forEach((r,i)=>{
+    let d=new Date(r.created_at);
+    html+=`<tr>
+      <td>${(page-1)*limit+i+1}</td>
+      <td>${r.mobile_number}</td>
+      <td>${r.waba_number}</td>
+      <td>${d.toLocaleDateString("en-GB",{timeZone:"Asia/Kolkata"})}</td>
+      <td>${d.toLocaleTimeString("en-GB",{timeZone:"Asia/Kolkata"})}</td>
+    </tr>`;
+  });
+
+  html+=`</tbody></table>
+  <button onclick="prev()">Prev</button>
+  Page ${page}
+  <button onclick="next()">Next</button>`;
+
+  document.getElementById("tableContainer").innerHTML=html;
+}
+
+function changeLimit(){
+  limit=parseInt(document.getElementById("limit").value);
+  page=1;
+  loadData();
+}
+
+function next(){page++; loadData();}
+function prev(){if(page>1){page--; loadData();}}
+
+function downloadCSV(){
+  let csv="Mobile,WABA,Date,Time\n";
+  lastData.forEach(r=>{
+    let d=new Date(r.created_at);
+    csv+=`${r.mobile_number},${r.waba_number},${d.toLocaleDateString()},${d.toLocaleTimeString()}\n`;
+  });
+
+  let blob=new Blob([csv],{type:'text/csv'});
+  let a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="data.csv";
+  a.click();
+}
+
+// Drag Drop
+const dz=document.getElementById("dropZone");
+const fi=document.getElementById("pdfFile");
+
+dz.onclick=()=>fi.click();
+fi.onchange=()=>fileName.innerText=fi.files[0].name;
+
+dz.ondragover=e=>{e.preventDefault(); dz.classList.add("dragover");};
+dz.ondragleave=()=>dz.classList.remove("dragover");
+dz.ondrop=e=>{
+  e.preventDefault();
+  dz.classList.remove("dragover");
+  fi.files=e.dataTransfer.files;
+  fileName.innerText=e.dataTransfer.files[0].name;
+};
+
 </script>
 
 </body>
