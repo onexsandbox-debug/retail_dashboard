@@ -50,27 +50,41 @@ async function uploadPDF() {
     };
 
     xhr.onload = function () {
-      btn.disabled = false;
-      btn.innerText = "Upload";
 
-      if (xhr.status === 200) {
-        const data = JSON.parse(xhr.responseText);
+  btn.disabled = false;
+  btn.innerText = "Upload";
 
-        if (data.success) {
-          document.getElementById("result").innerHTML =
-            `<b>Uploaded:</b><br><a href="${data.url}" target="_blank">${data.url}</a>`;
-        } else {
-          alert(data.message || "Upload failed");
-        }
+  if (xhr.status === 200) {
 
-      } else {
-        alert("Upload failed");
+    const data = JSON.parse(xhr.responseText);
+
+    if (data.success) {
+
+      // ✅ FIX: KEEP FILE NAME AFTER UPLOAD
+      const fileInput = document.getElementById("pdfFile");
+
+      if (fileInput.files && fileInput.files.length > 0) {
+        document.getElementById("fileName").innerText =
+          fileInput.files[0].name;
       }
 
-      setTimeout(() => {
-        document.getElementById("uploadProgressContainer").style.display = "none";
-      }, 1500);
-    };
+      // ✅ Optional success message
+      document.getElementById("result").innerHTML =
+        `<span style="color:green;">✔ Upload successful</span>`;
+
+    } else {
+      showError(data.message || "Upload failed");
+    }
+
+  } else {
+    showError("Upload failed");
+  }
+
+  // ✅ RESET PROGRESS BAR (keep UI clean)
+  setTimeout(() => {
+    document.getElementById("uploadProgressContainer").style.display = "none";
+  }, 1500);
+};
 
     xhr.onerror = function () {
       btn.disabled = false;
