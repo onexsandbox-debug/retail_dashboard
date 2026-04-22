@@ -70,51 +70,31 @@ async function loadAnalyticsDashboard() {
     });
 
     // ============================
-// 🥧 PIE CHART (WITH %)
-// ============================
-
-const pieCtx = document.getElementById("pieChart");
-
-if (pieCtx) {
-
-  // destroy old chart
-  if (window.pieChartInstance) {
-    window.pieChartInstance.destroy();
-  }
-
-  const total =
-    storeData.length +
-    offerData.length +
-    loyaltyData.length || 1;
-
-  const storePct = ((storeData.length / total) * 100).toFixed(1);
-  const offerPct = ((offerData.length / total) * 100).toFixed(1);
-  const loyaltyPct = ((loyaltyData.length / total) * 100).toFixed(1);
-
-  window.pieChartInstance = new Chart(pieCtx, {
-    type: "pie",
-    data: {
-      labels: [
-        `Store (${storePct}%)`,
-        `Offer (${offerPct}%)`,
-        `Loyalty (${loyaltyPct}%)`
-      ],
-      datasets: [{
-        data: [
-          storeData.length,
-          offerData.length,
-          loyaltyData.length
-        ]
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false
+    // 🥧 PIE CHART
+    // ============================
+    if (window.pieChartInstance) {
+      window.pieChartInstance.destroy();
     }
-  });
 
-  console.log("✅ Analytics loaded");
+    const pieCtx = document.getElementById("pieChart");
 
-} else {
-  console.error("❌ pieChart canvas not found");
+    window.pieChartInstance = new Chart(pieCtx, {
+      type: "pie",
+      data: {
+        labels: ["Store", "Offer", "Loyalty"],
+        datasets: [{
+          data: [
+            storeData.length,
+            offerData.length,
+            loyaltyData.length
+          ]
+        }]
+      }
+    });
+
+    console.log("✅ Analytics loaded");
+
+  } catch (err) {
+    console.error("❌ Analytics error:", err);
+  }
 }
