@@ -74,6 +74,7 @@
     <div onclick="switchTab('store', this)">Nearest Store</div>
     <div onclick="switchTab('offer', this)">Offer</div>
     <div onclick="switchTab('loyalty', this)">Loyalty Points</div>
+    <div onclick="switchTab('analytics', this)">Analytics</div>
   </div>
 </div>
 
@@ -123,10 +124,30 @@
   <div id="dataSection" class="section">
     <div id="tableContainer"></div>
   </div>
+  
+  <!-- ✅ ADD ANALYTICS HERE -->
+<div id="analyticsSection" class="section">
+
+  <h3>Customer Analytics</h3>
+
+  <div style="height:300px;">
+    <canvas id="lineChart"></canvas>
+  </div>
+
+  <br><br>
+
+  <div style="height:300px;">
+    <canvas id="pieChart"></canvas>
+  </div>
+
+</div>
 
 </div>
 
 <script src="/js/upload.js"></script>
+<!-- ✅ ADD HERE -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/js/analytics.js"></script>
 
 <script>
 
@@ -147,16 +168,37 @@ function switchTab(tab, el){
 
   currentTab=tab; page=1;
 
+  // ✅ UPLOAD
   if(tab==="upload"){
     document.getElementById("upload").classList.add("active-section");
     filters.style.display="none";
     document.getElementById("title").innerText="Upload Center";
-  } else {
-    document.getElementById("dataSection").classList.add("active-section");
-    filters.style.display="flex";
-    document.getElementById("title").innerText=tab==="store"?"Nearest Store":tab==="offer"?"Offer":"Loyalty Points";
-    loadData();
+    return;
   }
+
+  // ✅ ANALYTICS (🔥 THIS IS NEW)
+  if(tab==="analytics"){
+    document.getElementById("analyticsSection").classList.add("active-section");
+    filters.style.display="none";
+    document.getElementById("title").innerText="Analytics Dashboard";
+
+    if(typeof loadAnalyticsDashboard === "function"){
+      loadAnalyticsDashboard();
+    }
+
+    return;
+  }
+
+  // ✅ DATA (store / offer / loyalty)
+  document.getElementById("dataSection").classList.add("active-section");
+  filters.style.display="flex";
+
+  document.getElementById("title").innerText=
+    tab==="store"?"Nearest Store":
+    tab==="offer"?"Offer":
+    "Loyalty Points";
+
+  loadData();
 }
 
 async function loadData(){
@@ -227,7 +269,9 @@ const dz=document.getElementById("dropZone");
 const fi=document.getElementById("pdfFile");
 
 dz.onclick=()=>fi.click();
-fi.onchange=()=>fileName.innerText=fi.files[0].name;
+fi.onchange = () => {
+  document.getElementById("fileName").innerText = fi.files[0].name;
+};
 
 dz.ondragover=e=>{e.preventDefault(); dz.classList.add("dragover");};
 dz.ondragleave=()=>dz.classList.remove("dragover");
