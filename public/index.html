@@ -6,39 +6,128 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&display=swap" rel="stylesheet">
 
   <style>
-    body { margin:0; font-family:'Manrope'; background:#f4f6f9; display:flex; font-size:13px; }
-    .sidebar { width:240px; background:white; height:100vh; border-right:1px solid #eee; }
-    .logo { padding:15px 20px; }
-    .logo img { max-width:140px; }
-    .menu { padding:10px; }
-    .menu div { padding:12px; margin-bottom:5px; cursor:pointer; border-radius:6px; }
-    .menu div:hover { background:#f5f5f5; }
-    .active { background:#ffe6e6; color:#e60023; font-weight:600; }
-    .main { flex:1; padding:20px; }
-    .header { display:flex; justify-content:space-between; margin-bottom:20px; }
-    .logout-btn { background:#c62828; color:white; border:none; padding:8px 12px; border-radius:6px; }
+    body {
+      margin: 0;
+      font-family: 'Manrope', sans-serif;
+      background: #f4f6f9;
+      display: flex;
+      font-size: 13px;
+    }
 
-    .filters { display:flex; gap:10px; margin-bottom:15px; background:white; padding:15px; border-radius:10px; }
+    .sidebar {
+      width: 240px;
+      background: white;
+      height: 100vh;
+      border-right: 1px solid #eee;
+    }
 
-    .card { background:white; padding:20px; border-radius:10px; }
+    .logo {
+      padding: 15px 20px;
+    }
 
-    table { width:100%; border-collapse:collapse; }
-    th { background:#f5f6fa; padding:12px; text-align:left; }
-    td { padding:10px; border-bottom:1px solid #eee; }
+    .logo img {
+      max-width: 140px;
+    }
 
-    .status {
-      background:#e6f4ea;
-      color:#1e7e34;
-      padding:4px 10px;
-      border-radius:20px;
-      font-size:12px;
+    .menu {
+      padding: 10px;
+    }
+
+    .menu div {
+      padding: 12px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .menu div:hover {
+      background: #f5f5f5;
+    }
+
+    .active {
+      background: #ffe6e6;
+      color: #e60023;
+      font-weight: 600;
+    }
+
+    .main {
+      flex: 1;
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .logout-btn {
+      background: #c62828;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filters input, .filters select {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .btn {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-filter { background: #ff7a00; color: white; }
+    .btn-refresh { background: #1f4e8c; color: white; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th {
+      background: #f5f7fb;
+      padding: 12px;
+      text-align: left;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .active-section {
+      display: block;
     }
 
     .pagination {
-      margin-top:15px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
+      margin-top: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
   </style>
@@ -62,64 +151,92 @@
 <div class="main">
 
   <div class="header">
-    <h3 id="sectionTitle">Upload Center</h3>
+    <h3 id="title">Upload Center</h3>
     <button class="logout-btn">Logout</button>
   </div>
 
+  <!-- FILTER -->
   <div class="filters">
-    <input id="mobileFilter" type="text" placeholder="Mobile">
-    <select id="limitSelect" onchange="refreshData()">
-      <option value="10">10</option>
-      <option value="20">20</option>
-      <option value="30">30</option>
-      <option value="50">50</option>
-      <option value="100">100</option>
+    <input type="text" id="mobile" placeholder="Mobile">
+    <button class="btn btn-filter" onclick="loadData()">Filter</button>
+
+    <select id="limit" onchange="changeLimit()">
+      <option>10</option>
+      <option>20</option>
+      <option>30</option>
+      <option>50</option>
+      <option>100</option>
     </select>
-    <button onclick="refreshData()">Refresh</button>
+
+    <button class="btn btn-refresh" onclick="loadData()">Refresh</button>
   </div>
 
-  <div class="card">
+  <!-- UPLOAD -->
+  <div id="upload" class="section active-section">
+    <input type="file" id="pdfFile">
+    <button onclick="uploadPDF()">Upload</button>
+  </div>
 
-    <div id="uploadSection">Upload Section</div>
-
-    <div id="dynamicContent" style="display:none;"></div>
-
+  <!-- DATA -->
+  <div id="dataSection" class="section">
+    <div id="tableContainer"></div>
   </div>
 
 </div>
 
 <script>
 
-let currentPage = 1;
-let currentTab = "store";
+let currentTab = 'upload';
+let page = 1;
+let limit = 10;
 
-// =============================
-async function loadData(type) {
+// ======================
+function switchTab(tab, el) {
 
-  currentTab = type;
+  currentTab = tab;
+  page = 1;
 
-  const mobile = document.getElementById("mobileFilter").value;
-  const limit = document.getElementById("limitSelect").value;
+  document.querySelectorAll(".menu div").forEach(e => e.classList.remove("active"));
+  el.classList.add("active");
 
-  const dynamic = document.getElementById("dynamicContent");
+  document.querySelectorAll(".section").forEach(e => e.classList.remove("active-section"));
+
+  if (tab === 'upload') {
+    document.getElementById("upload").classList.add("active-section");
+    document.getElementById("title").innerText = "Upload Center";
+  } else {
+    document.getElementById("dataSection").classList.add("active-section");
+
+    document.getElementById("title").innerText =
+      tab === "store" ? "Nearest Store" :
+      tab === "offer" ? "Offer" :
+      "Loyalty Points";
+
+    loadData();
+  }
+}
+
+// ======================
+async function loadData() {
+
+  if (currentTab === 'upload') return;
+
+  const mobile = document.getElementById("mobile").value;
 
   let api = {
     store: "getStoreVisit",
     offer: "getOfferVisit",
     loyalty: "getLoyaltyVisit"
-  }[type];
+  }[currentTab];
 
-  document.getElementById("sectionTitle").innerText =
-    type === "store" ? "Nearest Store" :
-    type === "offer" ? "Offer" : "Loyalty Points";
-
-  const res = await fetch(`/api/${api}?page=${currentPage}&limit=${limit}&mobile=${mobile}`);
+  const res = await fetch(`/api/${api}?page=${page}&limit=${limit}&mobile=${mobile}`);
   const json = await res.json();
 
-  if (!json.success) {
-    dynamic.innerHTML = "No data";
-    return;
-  }
+  renderTable(json.data || []);
+}
+
+// ======================
+function renderTable(data) {
 
   let html = `
   <table>
@@ -130,75 +247,58 @@ async function loadData(type) {
         <th>WABA</th>
         <th>Date</th>
         <th>Time</th>
-        <th>Status</th>
       </tr>
     </thead>
     <tbody>
   `;
 
-  json.data.forEach((row, i) => {
+  data.forEach((row, i) => {
 
     const d = new Date(row.created_at);
 
     html += `
       <tr>
-        <td>${(currentPage - 1) * limit + i + 1}</td>
+        <td>${(page-1)*limit + i + 1}</td>
         <td>${row.mobile_number}</td>
         <td>${row.waba_number}</td>
         <td>${d.toLocaleDateString("en-GB",{timeZone:"Asia/Kolkata"})}</td>
         <td>${d.toLocaleTimeString("en-GB",{timeZone:"Asia/Kolkata"})}</td>
-        <td><span class="status">Verified</span></td>
       </tr>
     `;
   });
 
   html += `</tbody></table>`;
 
-  // =============================
-  // PAGINATION UI
-  // =============================
   html += `
   <div class="pagination">
-    <button onclick="prevPage()">Prev</button>
-    <span>Page ${currentPage}</span>
-    <button onclick="nextPage()">Next</button>
+    <div>
+      <button onclick="prev()">Prev</button>
+      Page ${page}
+      <button onclick="next()">Next</button>
+    </div>
   </div>
   `;
 
-  dynamic.innerHTML = html;
+  document.getElementById("tableContainer").innerHTML = html;
 }
 
-
-// =============================
-function nextPage() {
-  currentPage++;
-  loadData(currentTab);
+// ======================
+function changeLimit() {
+  limit = parseInt(document.getElementById("limit").value);
+  page = 1;
+  loadData();
 }
 
-function prevPage() {
-  if (currentPage > 1) currentPage--;
-  loadData(currentTab);
+function next() {
+  page++;
+  loadData();
 }
 
-// =============================
-function switchTab(tab, el) {
-
-  document.querySelectorAll(".menu div").forEach(e => e.classList.remove("active"));
-  el.classList.add("active");
-
-  document.getElementById("uploadSection").style.display = tab === "upload" ? "block" : "none";
-  document.getElementById("dynamicContent").style.display = tab === "upload" ? "none" : "block";
-
-  if (tab !== "upload") {
-    currentPage = 1;
-    loadData(tab);
+function prev() {
+  if (page > 1) {
+    page--;
+    loadData();
   }
-}
-
-// =============================
-function refreshData() {
-  currentPage = 1;
-  loadData(currentTab);
 }
 
 </script>
