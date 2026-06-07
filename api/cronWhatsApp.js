@@ -95,7 +95,93 @@ module.exports = async (req, res) => {
 
   try {
 
-    // Your main cron code here
+    const { data: config } =
+      await supabase
+        .from('campaign_config')
+        .select('*')
+        .eq('id', 1)
+        .single();
+
+    if (!config || !config.enabled) {
+
+      return res.json({
+        success: true,
+        message: "Campaign Disabled"
+      });
+
+    }
+
+    const { data: offerData } =
+      await supabase
+        .from('retail_offer_visit')
+        .select('*');
+
+    const { data: storeData } =
+      await supabase
+        .from('retail_store_location')
+        .select('*');
+
+    const activityMap = {};
+
+    [...offerData, ...storeData]
+      .forEach(row => {
+
+        const mobile =
+          row.mobile_number
+            .toString()
+            .replace("+", "");
+
+        const activityTime =
+          new Date(row.created_at);
+
+        if (
+          !activityMap[mobile] ||
+          activityTime >
+          activityMap[mobile]
+        ) {
+          activityMap[mobile] =
+            activityTime;
+        }
+
+      });
+
+    const now = new Date();
+
+    for (const mobile in activityMap) {
+
+      const diffSeconds =
+        Math.floor(
+          (now -
+            activityMap[mobile]) / 1000
+        );
+
+      console.log(
+        mobile,
+        diffSeconds
+      );
+
+      await processNudge(
+        mobile,
+        diffSeconds,
+        config.nudge1_seconds,
+        1
+      );
+
+      await processNudge(
+        mobile,
+        diffSeconds,
+        config.nudge2_seconds,
+        2
+      );
+
+      await processNudge(
+        mobile,
+        diffSeconds,
+        config.nudge3_seconds,
+        3
+      );
+
+    }
 
     return res.json({
       success: true
@@ -106,7 +192,8 @@ module.exports = async (req, res) => {
     console.error(err);
 
     return res.status(500).json({
-      success: false
+      success: false,
+      error: err.message
     });
 
   }
