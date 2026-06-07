@@ -59,6 +59,13 @@
     .btn-upload { margin-top:15px; padding:10px; background:#D56269; color:white; border:none; border-radius:6px; }
 
     #uploadProgressContainer { display:none; margin-top:10px; }
+   
+    #campaignSection input{
+  width:120px;
+  padding:8px;
+  border:1px solid #ccc;
+  border-radius:6px;
+}
   </style>
 </head>
 
@@ -87,7 +94,7 @@
   </div>
 
   <!-- FILTER -->
-  <div class="filters" id="filtersBar">
+  <div class="filters" id="filtersBar" style="display:none;">
     <input type="text" id="mobile" placeholder="Mobile">
     <button class="btn btn-filter" onclick="loadData()">Filter</button>
 
@@ -160,21 +167,28 @@
 
     <tbody>
 
-      <tr>
-        <td>Find Nearby Store</td>
-        <td><input type="number" id="store_nudge1" value="300"></td>
-        <td><input type="number" id="store_nudge2" value="1800"></td>
-        <td><input type="number" id="store_nudge3" value="86400"></td>
-      </tr>
+<tr>
+  <td>Customer Re-engagement</td>
+  <td>
+    <input type="number"
+           id="nudge1"
+           value="300">
+  </td>
 
-      <tr>
-        <td>Find Offer</td>
-        <td><input type="number" id="offer_nudge1" value="300"></td>
-        <td><input type="number" id="offer_nudge2" value="1800"></td>
-        <td><input type="number" id="offer_nudge3" value="86400"></td>
-      </tr>
+  <td>
+    <input type="number"
+           id="nudge2"
+           value="1800">
+  </td>
 
-    </tbody>
+  <td>
+    <input type="number"
+           id="nudge3"
+           value="86400">
+  </td>
+</tr>
+
+</tbody>
   </table>
 
   <br>
@@ -335,7 +349,8 @@ dz.ondrop=e=>{
   e.preventDefault();
   dz.classList.remove("dragover");
   fi.files=e.dataTransfer.files;
-  fileName.innerText=e.dataTransfer.files[0].name;
+  document.getElementById("fileName").innerText =
+  e.dataTransfer.files[0].name;
 };
   // ✅ ADD HERE AT THE VERY END
 
@@ -343,17 +358,17 @@ async function saveCampaignConfig(){
 
   const payload = {
 
-    store:{
-      nudge1:parseInt(document.getElementById("store_nudge1").value),
-      nudge2:parseInt(document.getElementById("store_nudge2").value),
-      nudge3:parseInt(document.getElementById("store_nudge3").value)
-    },
+    nudge1: parseInt(
+      document.getElementById("nudge1").value
+    ),
 
-    offer:{
-      nudge1:parseInt(document.getElementById("offer_nudge1").value),
-      nudge2:parseInt(document.getElementById("offer_nudge2").value),
-      nudge3:parseInt(document.getElementById("offer_nudge3").value)
-    }
+    nudge2: parseInt(
+      document.getElementById("nudge2").value
+    ),
+
+    nudge3: parseInt(
+      document.getElementById("nudge3").value
+    )
 
   };
 
