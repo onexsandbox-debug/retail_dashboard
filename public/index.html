@@ -354,7 +354,7 @@ dz.ondrop=e=>{
 };
   // ✅ ADD HERE AT THE VERY END
 
-async function saveCampaignConfig(){
+async function saveCampaignConfig() {
 
   const payload = {
 
@@ -372,11 +372,25 @@ async function saveCampaignConfig(){
 
   };
 
-  console.log(payload);
+  const res = await fetch(
+    "/api/saveCampaignConfig",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    }
+  );
 
-  alert("Configuration Saved");
+  const json = await res.json();
+
+  if (json.success) {
+    alert("Configuration Saved");
+  } else {
+    alert("Save Failed");
+  }
 }
-
 </script>
 
 </body>
