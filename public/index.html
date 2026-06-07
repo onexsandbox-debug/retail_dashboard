@@ -75,6 +75,7 @@
     <div onclick="switchTab('offer', this)">Offer</div>
     <div onclick="switchTab('loyalty', this)">Loyalty Points</div>
     <div onclick="switchTab('analytics', this)">Analytics</div>
+    <div onclick="switchTab('campaign', this)">Campaign Settings</div>
   </div>
 </div>
 
@@ -125,7 +126,7 @@
     <div id="tableContainer"></div>
   </div>
   
-  <!-- ✅ ADD ANALYTICS HERE -->
+  <!-- ✅ ANALYTICS -->
 <div id="analyticsSection" class="section">
 
   <h3>Customer Analytics</h3>
@@ -139,6 +140,48 @@
   <div style="height:300px;">
     <canvas id="pieChart"></canvas>
   </div>
+
+</div>
+
+<!-- ✅ CAMPAIGN SETTINGS -->
+<div id="campaignSection" class="section">
+
+  <h3>Campaign Configuration</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Module</th>
+        <th>Nudge 1 (Sec)</th>
+        <th>Nudge 2 (Sec)</th>
+        <th>Nudge 3 (Sec)</th>
+      </tr>
+    </thead>
+
+    <tbody>
+
+      <tr>
+        <td>Find Nearby Store</td>
+        <td><input type="number" id="store_nudge1" value="300"></td>
+        <td><input type="number" id="store_nudge2" value="1800"></td>
+        <td><input type="number" id="store_nudge3" value="86400"></td>
+      </tr>
+
+      <tr>
+        <td>Find Offer</td>
+        <td><input type="number" id="offer_nudge1" value="300"></td>
+        <td><input type="number" id="offer_nudge2" value="1800"></td>
+        <td><input type="number" id="offer_nudge3" value="86400"></td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <br>
+
+  <button class="btn btn-refresh" onclick="saveCampaignConfig()">
+    Save Configuration
+  </button>
 
 </div>
 
@@ -185,6 +228,19 @@ function switchTab(tab, el){
     if(typeof loadAnalyticsDashboard === "function"){
       loadAnalyticsDashboard();
     }
+
+    return;
+  }
+  // ✅ CAMPAIGN SETTINGS (ADD THIS HERE)
+  if(tab==="campaign"){
+
+    document.getElementById("campaignSection")
+      .classList.add("active-section");
+
+    filters.style.display="none";
+
+    document.getElementById("title").innerText =
+      "Campaign Settings";
 
     return;
   }
@@ -281,6 +337,30 @@ dz.ondrop=e=>{
   fi.files=e.dataTransfer.files;
   fileName.innerText=e.dataTransfer.files[0].name;
 };
+  // ✅ ADD HERE AT THE VERY END
+
+async function saveCampaignConfig(){
+
+  const payload = {
+
+    store:{
+      nudge1:parseInt(document.getElementById("store_nudge1").value),
+      nudge2:parseInt(document.getElementById("store_nudge2").value),
+      nudge3:parseInt(document.getElementById("store_nudge3").value)
+    },
+
+    offer:{
+      nudge1:parseInt(document.getElementById("offer_nudge1").value),
+      nudge2:parseInt(document.getElementById("offer_nudge2").value),
+      nudge3:parseInt(document.getElementById("offer_nudge3").value)
+    }
+
+  };
+
+  console.log(payload);
+
+  alert("Configuration Saved");
+}
 
 </script>
 
